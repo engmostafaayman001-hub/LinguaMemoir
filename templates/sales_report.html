@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}تقارير المبيعات - نظام الكاشير{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3 text-primary">
+            <i class="fas fa-chart-bar me-2"></i>
+            تقارير المبيعات
+        </h1>
+    </div>
+</div>
+
+<!-- Date Range Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">من تاريخ</label>
+                <input type="date" name="start_date" class="form-control" 
+                       value="{{ start_date }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">إلى تاريخ</label>
+                <input type="date" name="end_date" class="form-control" 
+                       value="{{ end_date }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        عرض التقرير
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">إجمالي الإيرادات</h6>
+                        <h4>{{ "%.2f"|format(total_revenue) }} ر.س</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-money-bill-wave fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">عدد المعاملات</h6>
+                        <h4>{{ total_transactions }}</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-receipt fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">متوسط قيمة المعاملة</h6>
+                        <h4>
+                            {% if total_transactions > 0 %}
+                            {{ "%.2f"|format(total_revenue / total_transactions) }} ر.س
+                            {% else %}
+                            0.00 ر.س
+                            {% endif %}
+                        </h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calculator fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            تفاصيل المبيعات
+        </h6>
+        {% if sales %}
+        <button class="btn btn-sm btn-success" onclick="exportToExcel()">
+            <i class="fas fa-file-excel me-1"></i>
+            تصدير Excel
+        </button>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if sales %}
+        <div class="table-responsive">
+            <table class="table table-hover" id="salesTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>رقم الفاتورة</th>
+                        <th>التاريخ والوقت</th>
+                        <th>الكاشير</th>
+                        <th>العميل</th>
+                        <th>الإجمالي</th>
+                        <th>الخصم</th>
+                        <th>طريقة الدفع</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sales %}
+                    <tr>
+                        <td>
+                            <strong>{{ sale.invoice_number }}</strong>
+                        </td>
+                        <td>
+                            {{ sale.created_at.strftime('%Y-%m-%d') }}
+                            <br>
+                            <small class="text-muted">{{ sale.created_at.strftime('%H:%M') }}</small>
+                        </td>
+                        <td>{{ sale.employee.full_name }}</td>
+                        <td>{{ sale.customer_name or 'عميل عادي' }}</td>
+                        <td>
+                            <strong class="text-success">{{ "%.2f"|format(sale.total_amount) }} ر.س</strong>
+                        </td>
+                        <td>
+                            {% if sale.discount_amount > 0 %}
+                            <span class="text-warning">-{{ "%.2f"|format(sale.discount_amount) }} ر.س</span>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if sale.payment_method == 'cash' %}
+                            <span class="badge bg-success">نقداً</span>
+                            {% elif sale.payment_method == 'card' %}
+                            <span class="badge bg-primary">بطاقة</span>
+                            {% else %}
+                            <span class="badge bg-warning">مختلط</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('view_invoice', sale_id=sale.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('print_invoice', sale_id=sale.id) }}" 
+                                   class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-info" 
+                                        data-bs-toggle="modal" data-bs-target="#saleModal{{ sale.id }}">
+                                    <i class="fas fa-info"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Sale Details Modal -->
+                    <div class="modal fade" id="saleModal{{ sale.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">تفاصيل الفاتورة: {{ sale.invoice_number }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>التاريخ:</strong> {{ sale.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>الكاشير:</strong> {{ sale.employee.full_name }}
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>العميل:</strong> {{ sale.customer_name or 'عميل عادي' }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>رقم الهاتف:</strong> {{ sale.customer_phone or '-' }}
+                                        </div>
+                                    </div>
+                                    
+                                    <h6>المنتجات:</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>المنتج</th>
+                                                    <th>الكمية</th>
+                                                    <th>السعر</th>
+                                                    <th>الإجمالي</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in sale.items %}
+                                                <tr>
+                                                    <td>{{ item.product.name_ar }}</td>
+                                                    <td>{{ item.quantity }}</td>
+                                                    <td>{{ "%.2f"|format(item.unit_price) }} ر.س</td>
+                                                    <td>{{ "%.2f"|format(item.total_price) }} ر.س</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    <div class="border-top pt-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <strong>المجموع الفرعي:</strong> {{ "%.2f"|format(sale.total_amount + sale.discount_amount) }} ر.س
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>الخصم:</strong> {{ "%.2f"|format(sale.discount_amount) }} ر.س
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <strong>الإجمالي النهائي:</strong> {{ "%.2f"|format(sale.total_amount) }} ر.س
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>طريقة الدفع:</strong> 
+                                                {% if sale.payment_method == 'cash' %}نقداً
+                                                {% elif sale.payment_method == 'card' %}بطاقة
+                                                {% else %}مختلط{% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                                    <a href="{{ url_for('view_invoice', sale_id=sale.id) }}" 
+                                       class="btn btn-primary" target="_blank">عرض الفاتورة</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+            <h5>لا توجد مبيعات</h5>
+            <p class="text-muted">لا توجد مبيعات في الفترة المحددة</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function exportToExcel() {
+    // Simple Excel export functionality
+    const table = document.getElementById('salesTable');
+    const ws = XLSX.utils.table_to_sheet(table);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'تقرير المبيعات');
+    XLSX.writeFile(wb, 'sales_report.xlsx');
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+{% endblock %}

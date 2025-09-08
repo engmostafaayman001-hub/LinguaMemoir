@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}نقطة البيع - نظام الكاشير{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.4/minified/html5-qrcode.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3 text-primary">
+            <i class="fas fa-shopping-cart me-2"></i>
+            نقطة البيع
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Product Search and Scanner -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <input type="text" id="productSearch" class="form-control" 
+                                   placeholder="البحث بالاسم أو الباركود...">
+                            <button class="btn btn-primary" type="button" onclick="searchProducts()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-success w-100" onclick="startBarcodeScanner()">
+                            <i class="fas fa-barcode me-1"></i>
+                            مسح الباركود
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="searchResults" class="row g-3">
+                    <!-- Search results will appear here -->
+                </div>
+                
+                <!-- Barcode Scanner Modal -->
+                <div class="modal fade" id="barcodeModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">مسح الباركود</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="qr-reader" style="width: 100%; height: 300px;"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Shopping Cart -->
+    <div class="col-md-4">
+        <div class="card sticky-top">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    سلة المشتريات
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="cartItems" class="mb-3">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                        <p>السلة فارغة</p>
+                    </div>
+                </div>
+                
+                <!-- Customer Info -->
+                <div class="mb-3">
+                    <label class="form-label">اسم العميل (اختياري)</label>
+                    <input type="text" id="customerName" class="form-control" placeholder="اسم العميل">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">رقم الهاتف (اختياري)</label>
+                    <input type="text" id="customerPhone" class="form-control" placeholder="رقم الهاتف">
+                </div>
+                
+                <!-- Discount -->
+                <div class="mb-3">
+                    <label class="form-label">خصم</label>
+                    <div class="input-group">
+                        <input type="number" id="discountAmount" class="form-control" value="0" min="0" step="0.01">
+                        <span class="input-group-text">ر.س</span>
+                    </div>
+                </div>
+                
+                <!-- Payment Method -->
+                <div class="mb-3">
+                    <label class="form-label">طريقة الدفع</label>
+                    <select id="paymentMethod" class="form-select">
+                        <option value="cash">نقداً</option>
+                        <option value="card">بطاقة</option>
+                        <option value="mixed">مختلط</option>
+                    </select>
+                </div>
+                
+                <!-- Total -->
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>المجموع الفرعي:</span>
+                        <span id="subtotal">0.00 ر.س</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>الخصم:</span>
+                        <span id="discount">0.00 ر.س</span>
+                    </div>
+                    <div class="d-flex justify-content-between h5">
+                        <strong>الإجمالي:</strong>
+                        <strong id="total">0.00 ر.س</strong>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="d-grid gap-2 mt-3">
+                    <button class="btn btn-success btn-lg" onclick="processSale()" disabled id="checkoutBtn">
+                        <i class="fas fa-credit-card me-1"></i>
+                        إتمام البيع
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="clearCart()">
+                        <i class="fas fa-trash me-1"></i>
+                        إفراغ السلة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/barcode-scanner.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pos.js') }}"></script>
+{% endblock %}

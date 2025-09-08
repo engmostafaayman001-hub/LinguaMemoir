@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام الكاشير الاحترافي{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <i class="fas fa-cash-register me-2"></i>
+                نظام الكاشير الاحترافي
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-tachometer-alt me-1"></i>
+                            لوحة التحكم
+                        </a>
+                    </li>
+                    {% if current_user.has_permission('make_sales') %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('pos') }}">
+                            <i class="fas fa-shopping-cart me-1"></i>
+                            نقطة البيع
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.has_permission('manage_products') %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('products') }}">
+                            <i class="fas fa-boxes me-1"></i>
+                            المنتجات
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.has_permission('manage_inventory') %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('inventory') }}">
+                            <i class="fas fa-warehouse me-1"></i>
+                            المخزون
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.has_permission('view_reports') %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('sales_report') }}">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            التقارير
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.has_permission('manage_employees') %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('employees') }}">
+                            <i class="fas fa-users me-1"></i>
+                            الموظفين
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            {{ current_user.full_name }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-cog me-2"></i>
+                                الإعدادات
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                تسجيل الخروج
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Flash Messages -->
+    <div class="container-fluid mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content -->
+    <main class="container-fluid">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
