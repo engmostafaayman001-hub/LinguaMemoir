@@ -136,7 +136,7 @@
                         <div class="list-group-item px-0">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">فاتورة {{ sale.invoice_number }}</h6>
-                                <small>{{ sale.created_at.strftime('%H:%M') }}</small>
+                                <small>{{ sale.created_at.strftime('%H:%M') if sale.created_at else 'غير محدد' }}</small>
                             </div>
                             <p class="mb-1">
                                 <strong>{{ "%.2f"|format(sale.total_amount) }} ر.س</strong>
