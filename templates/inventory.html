@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة المخزون - نظام الكاشير{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3 text-primary">
+            <i class="fas fa-warehouse me-2"></i>
+            إدارة المخزون
+        </h1>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">البحث</label>
+                <input type="text" name="search" class="form-control" 
+                       value="{{ search }}" placeholder="البحث بالاسم أو الباركود...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">الفئة</label>
+                <select name="category_id" class="form-select">
+                    <option value="">جميع الفئات</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+                        {{ category.name_ar }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid gap-2 d-md-flex">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        بحث
+                    </button>
+                    <a href="{{ url_for('inventory') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        مسح
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Products Table -->
+<div class="card">
+    <div class="card-body">
+        {% if products.items %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>الصورة</th>
+                        <th>اسم المنتج</th>
+                        <th>الباركود</th>
+                        <th>الفئة</th>
+                        <th>الكمية المتوفرة</th>
+                        <th>الحد الأدنى</th>
+                        <th>السعر</th>
+                        <th>الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products.items %}
+                    <tr {% if product.is_low_stock %}class="table-warning"{% endif %}>
+                        <td>
+                            {% if product.image_url %}
+                            <img src="{{ product.image_url }}" alt="{{ product.name_ar }}" 
+                                 class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-light d-flex align-items-center justify-content-center" 
+                                 style="width: 50px; height: 50px;">
+                                <i class="fas fa-image text-muted"></i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ product.name_ar }}</strong>
+                            <br>
+                            <small class="text-muted">{{ product.name }}</small>
+                            <br>
+                            <small class="text-muted">SKU: {{ product.sku }}</small>
+                        </td>
+                        <td>{{ product.barcode or '-' }}</td>
+                        <td>{{ product.category.name_ar if product.category else '-' }}</td>
+                        <td>
+                            <span class="badge {% if product.is_low_stock %}bg-warning{% else %}bg-success{% endif %}">
+                                {{ product.quantity }}
+                            </span>
+                        </td>
+                        <td>{{ product.min_quantity }}</td>
+                        <td>{{ "%.2f"|format(product.price) }} ر.س</td>
+                        <td>
+                            {% if product.is_low_stock %}
+                            <span class="badge bg-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                مخزون منخفض
+                            </span>
+                            {% else %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>
+                                متوفر
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if products.pages > 1 %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% for page_num in products.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != products.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('inventory', page=page_num, search=search, category_id=selected_category) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+            <h5>لا توجد منتجات</h5>
+            <p class="text-muted">لم يتم العثور على أي منتجات تطابق معايير البحث</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Low Stock Summary -->
+{% set low_stock_count = products.items | selectattr('is_low_stock') | list | length %}
+{% if low_stock_count > 0 %}
+<div class="alert alert-warning mt-4">
+    <h6 class="alert-heading">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        تنبيه: منتجات بمخزون منخفض
+    </h6>
+    <p class="mb-0">يوجد {{ low_stock_count }} منتج بمخزون منخفض في هذه الصفحة. يرجى إعادة التزويد في أقرب وقت.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة الموظفين - نظام الكاشير{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3 text-primary">
+            <i class="fas fa-users me-2"></i>
+            إدارة الموظفين
+        </h1>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addEmployeeModal">
+            <i class="fas fa-user-plus me-1"></i>
+            إضافة موظف جديد
+        </button>
+    </div>
+</div>
+
+<!-- Employees Table -->
+<div class="card">
+    <div class="card-body">
+        {% if employees %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>الاسم الكامل</th>
+                        <th>اسم المستخدم</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>الدور</th>
+                        <th>الحالة</th>
+                        <th>تاريخ التسجيل</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td>
+                            <strong>{{ employee.full_name }}</strong>
+                        </td>
+                        <td>{{ employee.username }}</td>
+                        <td>{{ employee.email }}</td>
+                        <td>
+                            {% if employee.role == 'admin' %}
+                            <span class="badge bg-danger">مدير عام</span>
+                            {% elif employee.role == 'manager' %}
+                            <span class="badge bg-warning">مدير</span>
+                            {% else %}
+                            <span class="badge bg-primary">كاشير</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if employee.is_active %}
+                            <span class="badge bg-success">مفعل</span>
+                            {% else %}
+                            <span class="badge bg-secondary">غير مفعل</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ employee.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        data-bs-toggle="modal" data-bs-target="#editEmployeeModal{{ employee.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% if employee.id != current_user.id %}
+                                <button type="button" class="btn btn-sm btn-outline-warning" 
+                                        onclick="toggleEmployeeStatus({{ employee.id }})">
+                                    {% if employee.is_active %}
+                                    <i class="fas fa-user-slash"></i>
+                                    {% else %}
+                                    <i class="fas fa-user-check"></i>
+                                    {% endif %}
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h5>لا يوجد موظفين</h5>
+            <p class="text-muted">لم يتم إضافة أي موظفين حتى الآن</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Employee Modal -->
+<div class="modal fade" id="addEmployeeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة موظف جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('employees') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">الاسم الكامل</label>
+                        <input type="text" name="full_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">اسم المستخدم</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">كلمة المرور</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">الدور</label>
+                        <select name="role" class="form-select" required>
+                            <option value="cashier">كاشير</option>
+                            <option value="manager">مدير</option>
+                            {% if current_user.role == 'admin' %}
+                            <option value="admin">مدير عام</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-success">إضافة الموظف</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

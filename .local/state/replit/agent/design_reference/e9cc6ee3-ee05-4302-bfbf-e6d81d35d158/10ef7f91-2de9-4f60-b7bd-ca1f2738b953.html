@@ -1,0 +1,1050 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinguaMemory - Language Learning Photo App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                }
+            }
+        }
+    };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --background: hsl(0 0% 100%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(142.1 76.2% 36.3%);
+            --primary-foreground: hsl(355.7 100% 97.3%);
+            --secondary: hsl(217.2 91.2% 59.8%);
+            --secondary-foreground: hsl(222.2 84% 4.9%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(43.2 96.4% 56.3%);
+            --accent-foreground: hsl(222.2 84% 4.9%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(142.1 76.2% 36.3%);
+            --radius: 0.75rem;
+        }
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .drag-drop-zone {
+            transition: all 0.3s ease;
+        }
+        
+        .drag-drop-zone.drag-over {
+            border-color: var(--primary);
+            background-color: hsl(142.1 76.2% 36.3% / 0.05);
+        }
+        
+        .photo-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .photo-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .memory-card {
+            transition: all 0.3s ease;
+        }
+        
+        .memory-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 50;
+            }
+        }
+        
+        .chatbot-container {
+            transition: all 0.3s ease;
+        }
+        
+        .chatbot-message {
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        @media (max-width: 640px) {
+            .photo-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground">
+    <!-- @COMPONENT: MobileNavigation -->
+    <nav class="mobile-nav md:hidden bg-card border-t border-border shadow-lg">
+        <div class="flex justify-around py-3">
+            <button class="nav-item active flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors" data-tab="dashboard">
+                <i class="fas fa-home text-lg text-primary"></i>
+                <span class="text-xs font-medium text-primary">Home</span>
+            </button>
+            <button class="nav-item flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors text-muted-foreground" data-tab="gallery">
+                <i class="fas fa-images text-lg"></i>
+                <span class="text-xs font-medium">Gallery</span>
+            </button>
+            <button class="nav-item flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors text-muted-foreground" data-tab="memories">
+                <i class="fas fa-heart text-lg"></i>
+                <span class="text-xs font-medium">Memories</span>
+            </button>
+            <button class="nav-item flex flex-col items-center space-y-1 px-3 py-2 rounded-lg transition-colors text-muted-foreground" data-tab="create">
+                <i class="fas fa-plus text-lg"></i>
+                <span class="text-xs font-medium">Create</span>
+            </button>
+        </div>
+    </nav>
+    <!-- @END_COMPONENT: MobileNavigation -->
+
+    <div class="flex h-screen">
+        <!-- @COMPONENT: DesktopSidebar -->
+        <aside class="hidden md:flex md:w-64 bg-card border-r border-border flex-col">
+            <div class="p-6 border-b border-border">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-primary-foreground text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-foreground">LinguaMemory</h1>
+                        <p class="text-sm text-muted-foreground">Learn & Remember</p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="flex-1 p-4">
+                <ul class="space-y-2">
+                    <li>
+                        <button class="desktop-nav-item active w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors bg-primary/10 text-primary" data-tab="dashboard">
+                            <i class="fas fa-home"></i>
+                            <span class="font-medium">Dashboard</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="desktop-nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-muted-foreground hover:bg-muted hover:text-foreground" data-tab="gallery">
+                            <i class="fas fa-images"></i>
+                            <span class="font-medium">Photo Gallery</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="desktop-nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-muted-foreground hover:bg-muted hover:text-foreground" data-tab="memories">
+                            <i class="fas fa-heart"></i>
+                            <span class="font-medium">My Memories</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="desktop-nav-item w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-muted-foreground hover:bg-muted hover:text-foreground" data-tab="create">
+                            <i class="fas fa-plus"></i>
+                            <span class="font-medium">Create Memory</span>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="p-4 border-t border-border">
+                <div class="flex items-center space-x-3 p-3 rounded-lg bg-muted">
+                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                        <span class="text-sm font-semibold text-primary-foreground">JD</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-foreground">John Doe</p>
+                        <p class="text-xs text-muted-foreground truncate">john@example.com</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <!-- @END_COMPONENT: DesktopSidebar -->
+
+        <!-- @COMPONENT: MainContent -->
+        <main class="flex-1 overflow-auto pb-20 md:pb-0">
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content">
+                <div class="p-4 md:p-8">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-foreground mb-2">Welcome back, John! 👋</h1>
+                        <p class="text-muted-foreground">Continue your language learning journey with your photo memories</p>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-card p-4 rounded-xl border border-border">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-images text-primary text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-muted-foreground">Photos</p>
+                                    <p class="text-xl font-bold text-foreground">248</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-card p-4 rounded-xl border border-border">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 bg-secondary/10 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-heart text-secondary text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-muted-foreground">Memories</p>
+                                    <p class="text-xl font-bold text-foreground">42</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-card p-4 rounded-xl border border-border">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-language text-accent text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-muted-foreground">Languages</p>
+                                    <p class="text-xl font-bold text-foreground">3</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-card p-4 rounded-xl border border-border">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-trophy text-green-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-muted-foreground">Streak</p>
+                                    <p class="text-xl font-bold text-foreground">7 days</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Memories -->
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-foreground">Recent Memories</h2>
+                            <button class="text-primary hover:text-primary/80 font-medium transition-colors">View All</button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="memory-card bg-card rounded-xl overflow-hidden border border-border">
+                                <!-- Traditional Japanese garden with cherry blossoms and stone lanterns -->
+                                <img src="https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200" alt="Japanese garden" class="w-full h-48 object-cover" />
+                                <div class="p-4">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="bg-secondary/10 text-secondary px-2 py-1 rounded-md text-xs font-medium">Japanese</span>
+                                        <span class="text-xs text-muted-foreground">2 days ago</span>
+                                    </div>
+                                    <h3 class="font-semibold text-foreground mb-2">Cherry Blossom Festival</h3>
+                                    <p class="text-sm text-muted-foreground">Practicing vocabulary about seasons and nature during hanami...</p>
+                                    <div class="flex items-center mt-3 space-x-4">
+                                        <span class="flex items-center text-xs text-muted-foreground">
+                                            <i class="fas fa-images mr-1"></i>
+                                            5 photos
+                                        </span>
+                                        <span class="flex items-center text-xs text-muted-foreground">
+                                            <i class="fas fa-comment mr-1"></i>
+                                            12 words
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="memory-card bg-card rounded-xl overflow-hidden border border-border">
+                                <!-- French café with outdoor seating and Parisian street scene -->
+                                <img src="https://images.unsplash.com/photo-1559925393-8be0ec4767c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200" alt="French café" class="w-full h-48 object-cover" />
+                                <div class="p-4">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">French</span>
+                                        <span class="text-xs text-muted-foreground">4 days ago</span>
+                                    </div>
+                                    <h3 class="font-semibold text-foreground mb-2">Café Culture</h3>
+                                    <p class="text-sm text-muted-foreground">Learning food vocabulary at a traditional Parisian café...</p>
+                                    <div class="flex items-center mt-3 space-x-4">
+                                        <span class="flex items-center text-xs text-muted-foreground">
+                                            <i class="fas fa-images mr-1"></i>
+                                            8 photos
+                                        </span>
+                                        <span class="flex items-center text-xs text-muted-foreground">
+                                            <i class="fas fa-comment mr-1"></i>
+                                            18 words
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="memory-card bg-card rounded-xl overflow-hidden border border-border">
+                                <!-- Spanish market with colorful fruits and vegetables -->
+                                <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=200" alt="Spanish market" class="w-full h-48 object-cover" />
+                                <div class="p-4">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span class="bg-accent/10 text-accent px-2 py-1 rounded-md text-xs font-medium">Spanish</span>
+                                        <span class="text-xs text-muted-foreground">1 week ago</span>
+                                    </div>
+                                    <h3 class="font-semibold text-foreground mb-2">Market Day</h3>
+                                    <p class="text-sm text-muted-foreground">Exploring fruit and vegetable names at the local mercado...</p>
+                                    <div class="flex items-center mt-3 space-x-4">
+                                        <span class="flex items-center text-xs text-muted-foreground">
+                                            <i class="fas fa-images mr-1"></i>
+                                            6 photos
+                                        </span>
+                                        <span class="flex items-center text-xs text-muted-foreground">
+                                            <i class="fas fa-comment mr-1"></i>
+                                            15 words
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-gradient-to-br from-primary to-primary/80 rounded-xl p-6 text-primary-foreground">
+                            <h3 class="text-xl font-bold mb-2">Upload New Photos</h3>
+                            <p class="mb-4 opacity-90">Add photos from your language learning adventures</p>
+                            <button class="bg-primary-foreground text-primary px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition-colors">
+                                <i class="fas fa-upload mr-2"></i>
+                                Upload Photos
+                            </button>
+                        </div>
+                        
+                        <div class="bg-gradient-to-br from-secondary to-secondary/80 rounded-xl p-6 text-primary-foreground">
+                            <h3 class="text-xl font-bold mb-2">Create Memory</h3>
+                            <p class="mb-4 opacity-90">Turn your photos into learning memories</p>
+                            <button class="bg-primary-foreground text-secondary px-4 py-2 rounded-lg font-medium hover:bg-opacity-90 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>
+                                Create Memory
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gallery Tab -->
+            <div id="gallery-tab" class="tab-content hidden">
+                <div class="p-4 md:p-8">
+                    <div class="mb-6">
+                        <h1 class="text-3xl font-bold text-foreground mb-2">Photo Gallery</h1>
+                        <p class="text-muted-foreground">Organize and manage your language learning photos</p>
+                    </div>
+
+                    <!-- Gallery Controls -->
+                    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                        <div class="flex-1">
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"></i>
+                                <input type="text" placeholder="Search photos..." class="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <select class="px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option>All Languages</option>
+                                <option>Japanese</option>
+                                <option>French</option>
+                                <option>Spanish</option>
+                            </select>
+                            <button class="view-toggle px-4 py-2 bg-card border border-border rounded-lg hover:bg-muted transition-colors" data-view="grid">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button class="view-toggle px-4 py-2 bg-muted border border-border rounded-lg" data-view="list">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Upload Zone -->
+                    <div class="drag-drop-zone mb-8 border-2 border-dashed border-border rounded-xl p-8 text-center transition-all">
+                        <div class="max-w-md mx-auto">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-muted-foreground mb-4"></i>
+                            <h3 class="text-lg font-semibold text-foreground mb-2">Drop photos here</h3>
+                            <p class="text-muted-foreground mb-4">or click to browse your files</p>
+                            <button class="bg-primary text-primary-foreground px-6 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                                Choose Files
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Photo Grid -->
+                    <div id="photo-grid-view" class="photo-grid">
+                        <!-- Row 1 -->
+                        <!-- Traditional Japanese temple with pagoda architecture -->
+                        <div class="photo-card bg-card rounded-lg overflow-hidden border border-border">
+                            <img src="https://images.unsplash.com/photo-1545569341-9eb8b30979d9?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200" alt="Japanese temple" class="w-full h-40 object-cover" />
+                            <div class="p-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded">Japanese</span>
+                                    <button class="text-muted-foreground hover:text-foreground">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
+                                <p class="text-sm font-medium text-foreground">Temple visit</p>
+                                <p class="text-xs text-muted-foreground">3 days ago</p>
+                            </div>
+                        </div>
+
+                        <!-- French bakery with croissants and pastries -->
+                        <div class="photo-card bg-card rounded-lg overflow-hidden border border-border">
+                            <img src="https://pixabay.com/get/g3d46c5d9d81689e97fbe3ff50e98762ea383762550df12090adbf180cc9aa65e9f6fd41e4b8752f14fc735397ccd4bb06bf2ed19def09765b118bbf806720ed4_1280.jpg" alt="French bakery" class="w-full h-40 object-cover" />
+                            <div class="p-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs bg-primary/10 text-primary px-2 py-1 rounded">French</span>
+                                    <button class="text-muted-foreground hover:text-foreground">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
+                                <p class="text-sm font-medium text-foreground">Boulangerie</p>
+                                <p class="text-xs text-muted-foreground">5 days ago</p>
+                            </div>
+                        </div>
+
+                        <!-- Spanish flamenco dancer in traditional dress -->
+                        <div class="photo-card bg-card rounded-lg overflow-hidden border border-border">
+                            <img src="https://pixabay.com/get/gce1ace89932f97d6a6b1e83c0e076dc0a52223be6545833750decd48149b6092ed1bc351f51c0413f78b0c1216cc59d219dbdf4624b3af43ef253500ab69e562_1280.jpg" alt="Flamenco dancer" class="w-full h-40 object-cover" />
+                            <div class="p-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs bg-accent/10 text-accent px-2 py-1 rounded">Spanish</span>
+                                    <button class="text-muted-foreground hover:text-foreground">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
+                                <p class="text-sm font-medium text-foreground">Flamenco show</p>
+                                <p class="text-xs text-muted-foreground">1 week ago</p>
+                            </div>
+                        </div>
+
+                        <!-- Row 2 -->
+                        <!-- Japanese sushi preparation with fresh ingredients -->
+                        <div class="photo-card bg-card rounded-lg overflow-hidden border border-border">
+                            <img src="https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200" alt="Sushi preparation" class="w-full h-40 object-cover" />
+                            <div class="p-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded">Japanese</span>
+                                    <button class="text-red-500">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
+                                <p class="text-sm font-medium text-foreground">Sushi class</p>
+                                <p class="text-xs text-muted-foreground">2 weeks ago</p>
+                            </div>
+                        </div>
+
+                        <!-- French wine tasting with vineyard background -->
+                        <div class="photo-card bg-card rounded-lg overflow-hidden border border-border">
+                            <img src="https://pixabay.com/get/g9193f933a143f9cd0d470b61eae9cf4bf7068031447fe20c057d7b8334f6160a8b8ef5f0f365b71a2b6ece7e4ecce04f1de4390d4462f973887c6410b89adf85_1280.jpg" alt="Wine tasting" class="w-full h-40 object-cover" />
+                            <div class="p-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs bg-primary/10 text-primary px-2 py-1 rounded">French</span>
+                                    <button class="text-muted-foreground hover:text-foreground">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
+                                <p class="text-sm font-medium text-foreground">Wine tasting</p>
+                                <p class="text-xs text-muted-foreground">2 weeks ago</p>
+                            </div>
+                        </div>
+
+                        <!-- Spanish paella cooking with seafood and rice -->
+                        <div class="photo-card bg-card rounded-lg overflow-hidden border border-border">
+                            <img src="https://images.unsplash.com/photo-1534080564583-6be75777b70a?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200" alt="Paella cooking" class="w-full h-40 object-cover" />
+                            <div class="p-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs bg-accent/10 text-accent px-2 py-1 rounded">Spanish</span>
+                                    <button class="text-red-500">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
+                                <p class="text-sm font-medium text-foreground">Paella workshop</p>
+                                <p class="text-xs text-muted-foreground">3 weeks ago</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Photo List View (Hidden by default) -->
+                    <div id="photo-list-view" class="hidden space-y-4">
+                        <div class="bg-card rounded-lg border border-border p-4 flex items-center space-x-4">
+                            <!-- Traditional Japanese temple with pagoda architecture -->
+                            <img src="https://images.unsplash.com/photo-1545569341-9eb8b30979d9?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80" alt="Japanese temple" class="w-16 h-16 rounded-lg object-cover" />
+                            <div class="flex-1">
+                                <h3 class="font-medium text-foreground">Temple visit</h3>
+                                <p class="text-sm text-muted-foreground">Traditional architecture vocabulary</p>
+                                <div class="flex items-center space-x-4 mt-1">
+                                    <span class="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded">Japanese</span>
+                                    <span class="text-xs text-muted-foreground">3 days ago</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted">
+                                    <i class="fas fa-heart"></i>
+                                </button>
+                                <button class="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memories Tab -->
+            <div id="memories-tab" class="tab-content hidden">
+                <div class="p-4 md:p-8">
+                    <div class="mb-6">
+                        <h1 class="text-3xl font-bold text-foreground mb-2">My Memories</h1>
+                        <p class="text-muted-foreground">Your language learning journey captured in memories</p>
+                    </div>
+
+                    <!-- Memory Filters -->
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        <button class="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium">All</button>
+                        <button class="px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted">Japanese</button>
+                        <button class="px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted">French</button>
+                        <button class="px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted">Spanish</button>
+                        <button class="px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted">Favorites</button>
+                    </div>
+
+                    <!-- Memory Timeline -->
+                    <div class="space-y-6">
+                        <div class="bg-card rounded-xl border border-border overflow-hidden">
+                            <div class="p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-calendar text-secondary"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-foreground">Cherry Blossom Festival</h3>
+                                            <p class="text-sm text-muted-foreground">Japanese • March 15, 2024</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-muted-foreground hover:text-foreground">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                                
+                                <p class="text-foreground mb-4">
+                                    Today I visited the cherry blossom festival and learned so many beautiful words about spring and nature in Japanese. 
+                                    The experience was magical and helped me understand the cultural significance of hanami.
+                                </p>
+                                
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                                    <!-- Traditional Japanese garden with cherry blossoms -->
+                                    <img src="https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150" alt="Cherry blossoms" class="rounded-lg object-cover h-24 w-full" />
+                                    <!-- Japanese people in traditional dress under cherry trees -->
+                                    <img src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150" alt="Festival visitors" class="rounded-lg object-cover h-24 w-full" />
+                                    <!-- Close-up of cherry blossom petals -->
+                                    <img src="https://images.unsplash.com/photo-1522383225653-ed111181a951?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150" alt="Cherry blossom petals" class="rounded-lg object-cover h-24 w-full" />
+                                    <!-- Traditional Japanese lanterns among trees -->
+                                    <img src="https://images.unsplash.com/photo-1480796927426-f609979314bd?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150" alt="Japanese lanterns" class="rounded-lg object-cover h-24 w-full" />
+                                </div>
+                                
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    <span class="bg-secondary/10 text-secondary px-3 py-1 rounded-lg text-sm">桜 (sakura)</span>
+                                    <span class="bg-secondary/10 text-secondary px-3 py-1 rounded-lg text-sm">花見 (hanami)</span>
+                                    <span class="bg-secondary/10 text-secondary px-3 py-1 rounded-lg text-sm">春 (haru)</span>
+                                    <span class="bg-secondary/10 text-secondary px-3 py-1 rounded-lg text-sm">美しい (utsukushii)</span>
+                                </div>
+                                
+                                <div class="flex items-center justify-between text-sm">
+                                    <div class="flex items-center space-x-4">
+                                        <span class="flex items-center text-muted-foreground">
+                                            <i class="fas fa-images mr-1"></i>
+                                            4 photos
+                                        </span>
+                                        <span class="flex items-center text-muted-foreground">
+                                            <i class="fas fa-comment mr-1"></i>
+                                            12 words learned
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button class="text-muted-foreground hover:text-red-500 transition-colors">
+                                            <i class="fas fa-heart"></i>
+                                        </button>
+                                        <button class="text-muted-foreground hover:text-primary transition-colors">
+                                            <i class="fas fa-share"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-card rounded-xl border border-border overflow-hidden">
+                            <div class="p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-coffee text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-foreground">Parisian Café Experience</h3>
+                                            <p class="text-sm text-muted-foreground">French • March 10, 2024</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-muted-foreground hover:text-foreground">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                                
+                                <p class="text-foreground mb-4">
+                                    Spent the afternoon at a traditional Parisian café practicing my French with the locals. 
+                                    Learned so much about café culture and food vocabulary while enjoying delicious pastries.
+                                </p>
+                                
+                                <div class="grid grid-cols-3 gap-2 mb-4">
+                                    <!-- French café with outdoor seating -->
+                                    <img src="https://images.unsplash.com/photo-1559925393-8be0ec4767c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150" alt="Parisian café" class="rounded-lg object-cover h-24 w-full" />
+                                    <!-- French croissants and pastries -->
+                                    <img src="https://pixabay.com/get/g35a4a14b3a458fb2832dd8fa523c5539fe233a05319d14ac7cda4e4bceb165f3192475727917b51af6de0327f47cf652cf5b21185a0d8cfe99fd3fba972d4d95_1280.jpg" alt="French pastries" class="rounded-lg object-cover h-24 w-full" />
+                                    <!-- French coffee and newspaper on café table -->
+                                    <img src="https://images.unsplash.com/photo-1511920170033-f8396924c348?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=150" alt="Coffee and newspaper" class="rounded-lg object-cover h-24 w-full" />
+                                </div>
+                                
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    <span class="bg-primary/10 text-primary px-3 py-1 rounded-lg text-sm">café</span>
+                                    <span class="bg-primary/10 text-primary px-3 py-1 rounded-lg text-sm">croissant</span>
+                                    <span class="bg-primary/10 text-primary px-3 py-1 rounded-lg text-sm">addition</span>
+                                    <span class="bg-primary/10 text-primary px-3 py-1 rounded-lg text-sm">délicieux</span>
+                                </div>
+                                
+                                <div class="flex items-center justify-between text-sm">
+                                    <div class="flex items-center space-x-4">
+                                        <span class="flex items-center text-muted-foreground">
+                                            <i class="fas fa-images mr-1"></i>
+                                            3 photos
+                                        </span>
+                                        <span class="flex items-center text-muted-foreground">
+                                            <i class="fas fa-comment mr-1"></i>
+                                            8 words learned
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button class="text-red-500">
+                                            <i class="fas fa-heart"></i>
+                                        </button>
+                                        <button class="text-muted-foreground hover:text-primary transition-colors">
+                                            <i class="fas fa-share"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Memory Tab -->
+            <div id="create-tab" class="tab-content hidden">
+                <div class="p-4 md:p-8">
+                    <div class="mb-6">
+                        <h1 class="text-3xl font-bold text-foreground mb-2">Create New Memory</h1>
+                        <p class="text-muted-foreground">Turn your photos into meaningful learning experiences</p>
+                    </div>
+
+                    <div class="max-w-2xl mx-auto">
+                        <form class="space-y-6">
+                            <!-- Basic Info -->
+                            <div class="bg-card rounded-xl border border-border p-6">
+                                <h3 class="text-lg font-semibold text-foreground mb-4">Memory Details</h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Memory Title</label>
+                                        <input type="text" placeholder="Give your memory a memorable title..." class="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Language</label>
+                                        <select class="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                                            <option>Select a language...</option>
+                                            <option>Japanese</option>
+                                            <option>French</option>
+                                            <option>Spanish</option>
+                                            <option>Other</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Description</label>
+                                        <textarea rows="4" placeholder="Describe your experience and what you learned..." class="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Photo Selection -->
+                            <div class="bg-card rounded-xl border border-border p-6">
+                                <h3 class="text-lg font-semibold text-foreground mb-4">Add Photos</h3>
+                                
+                                <div class="drag-drop-zone border-2 border-dashed border-border rounded-lg p-8 text-center mb-4">
+                                    <i class="fas fa-images text-3xl text-muted-foreground mb-3"></i>
+                                    <p class="text-foreground font-medium mb-1">Drop photos here or click to browse</p>
+                                    <p class="text-sm text-muted-foreground">Supports JPG, PNG, GIF up to 10MB each</p>
+                                    <button type="button" class="mt-3 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                                        Choose Photos
+                                    </button>
+                                </div>
+                                
+                                <!-- Selected Photos Preview -->
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <!-- Sample selected photos -->
+                                    <div class="relative group">
+                                        <!-- Traditional Japanese garden -->
+                                        <img src="https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150" alt="Selected photo" class="w-full h-24 object-cover rounded-lg" />
+                                        <button class="absolute top-1 right-1 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <i class="fas fa-times text-xs"></i>
+                                        </button>
+                                    </div>
+                                    <div class="relative group">
+                                        <!-- French café scene -->
+                                        <img src="https://images.unsplash.com/photo-1559925393-8be0ec4767c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150" alt="Selected photo" class="w-full h-24 object-cover rounded-lg" />
+                                        <button class="absolute top-1 right-1 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <i class="fas fa-times text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Vocabulary -->
+                            <div class="bg-card rounded-xl border border-border p-6">
+                                <h3 class="text-lg font-semibold text-foreground mb-4">Vocabulary & Words Learned</h3>
+                                
+                                <div class="space-y-3">
+                                    <div class="flex space-x-2">
+                                        <input type="text" placeholder="Word or phrase..." class="flex-1 px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                                        <input type="text" placeholder="Translation..." class="flex-1 px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                                        <button type="button" class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Added vocabulary -->
+                                    <div class="flex flex-wrap gap-2 mt-4">
+                                        <span class="bg-primary/10 text-primary px-3 py-1 rounded-lg text-sm flex items-center space-x-1">
+                                            <span>桜 (cherry blossom)</span>
+                                            <button class="text-primary/70 hover:text-primary">
+                                                <i class="fas fa-times text-xs"></i>
+                                            </button>
+                                        </span>
+                                        <span class="bg-primary/10 text-primary px-3 py-1 rounded-lg text-sm flex items-center space-x-1">
+                                            <span>美しい (beautiful)</span>
+                                            <button class="text-primary/70 hover:text-primary">
+                                                <i class="fas fa-times text-xs"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex space-x-4">
+                                <button type="button" class="flex-1 px-6 py-3 bg-muted text-foreground rounded-lg font-medium hover:bg-muted/80 transition-colors">
+                                    Save as Draft
+                                </button>
+                                <button type="submit" class="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
+                                    Create Memory
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <!-- @END_COMPONENT: MainContent -->
+    </div>
+
+    <!-- @COMPONENT: ChatbotWidget -->
+    <div class="fixed bottom-20 md:bottom-6 right-6 z-50">
+        <div id="chatbot-container" class="chatbot-container">
+            <!-- Chat Window (Hidden by default) -->
+            <div id="chat-window" class="hidden mb-4 w-80 h-96 bg-card border border-border rounded-xl shadow-xl overflow-hidden">
+                <div class="bg-primary text-primary-foreground p-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-primary-foreground/20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-robot text-sm"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">LinguaBot</h4>
+                            <p class="text-xs opacity-90">Online now</p>
+                        </div>
+                    </div>
+                    <button id="close-chat" class="text-primary-foreground/80 hover:text-primary-foreground">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="h-64 overflow-y-auto p-4 space-y-3">
+                    <div class="chatbot-message flex items-start space-x-2">
+                        <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-primary text-sm"></i>
+                        </div>
+                        <div class="bg-muted rounded-lg px-3 py-2 max-w-xs">
+                            <p class="text-sm text-foreground">Hi! I'm LinguaBot. How can I help you with your language learning journey today? 🌟</p>
+                        </div>
+                    </div>
+                    
+                    <div class="chatbot-message flex items-start space-x-2 justify-end">
+                        <div class="bg-primary rounded-lg px-3 py-2 max-w-xs">
+                            <p class="text-sm text-primary-foreground">How do I organize my photos by language?</p>
+                        </div>
+                    </div>
+                    
+                    <div class="chatbot-message flex items-start space-x-2">
+                        <div class="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-primary text-sm"></i>
+                        </div>
+                        <div class="bg-muted rounded-lg px-3 py-2 max-w-xs">
+                            <p class="text-sm text-foreground">Great question! You can organize photos by language in the Gallery tab. Use the language filter dropdown to sort by Japanese, French, Spanish, or add custom tags when uploading. 📸</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-4 border-t border-border">
+                    <div class="flex space-x-2">
+                        <input type="text" placeholder="Type your message..." class="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                        <button class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                            <i class="fas fa-paper-plane text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Toggle Button -->
+            <button id="chat-toggle" class="w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-all hover:scale-105 flex items-center justify-center">
+                <i class="fas fa-comment text-lg"></i>
+            </button>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: ChatbotWidget -->
+
+    <script>
+    (function() {
+        // Tab Navigation
+        function initTabNavigation() {
+            const mobileNavItems = document.querySelectorAll('.nav-item');
+            const desktopNavItems = document.querySelectorAll('.desktop-nav-item');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            function switchTab(tabId) {
+                // Hide all tab contents
+                tabContents.forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Show selected tab content
+                const selectedTab = document.getElementById(tabId + '-tab');
+                if (selectedTab) {
+                    selectedTab.classList.remove('hidden');
+                }
+                
+                // Update mobile nav states
+                mobileNavItems.forEach(item => {
+                    item.classList.remove('active');
+                    item.querySelector('i').classList.remove('text-primary');
+                    item.querySelector('span').classList.remove('text-primary');
+                    item.querySelector('i').classList.add('text-muted-foreground');
+                    item.querySelector('span').classList.add('text-muted-foreground');
+                });
+                
+                // Update desktop nav states
+                desktopNavItems.forEach(item => {
+                    item.classList.remove('active', 'bg-primary/10', 'text-primary');
+                    item.classList.add('text-muted-foreground');
+                });
+                
+                // Set active states
+                const activeMobileItem = document.querySelector(`[data-tab="${tabId}"].nav-item`);
+                const activeDesktopItem = document.querySelector(`[data-tab="${tabId}"].desktop-nav-item`);
+                
+                if (activeMobileItem) {
+                    activeMobileItem.classList.add('active');
+                    activeMobileItem.querySelector('i').classList.add('text-primary');
+                    activeMobileItem.querySelector('span').classList.add('text-primary');
+                    activeMobileItem.querySelector('i').classList.remove('text-muted-foreground');
+                    activeMobileItem.querySelector('span').classList.remove('text-muted-foreground');
+                }
+                
+                if (activeDesktopItem) {
+                    activeDesktopItem.classList.add('active', 'bg-primary/10', 'text-primary');
+                    activeDesktopItem.classList.remove('text-muted-foreground');
+                }
+            }
+            
+            // Add click listeners
+            [...mobileNavItems, ...desktopNavItems].forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tabId = item.dataset.tab;
+                    switchTab(tabId);
+                });
+            });
+        }
+        
+        // Gallery View Toggle
+        function initGalleryViewToggle() {
+            const viewToggleButtons = document.querySelectorAll('.view-toggle');
+            const gridView = document.getElementById('photo-grid-view');
+            const listView = document.getElementById('photo-list-view');
+            
+            viewToggleButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const view = button.dataset.view;
+                    
+                    // Update button states
+                    viewToggleButtons.forEach(btn => {
+                        btn.classList.remove('bg-muted');
+                        btn.classList.add('bg-card');
+                    });
+                    button.classList.add('bg-muted');
+                    button.classList.remove('bg-card');
+                    
+                    // Toggle views
+                    if (view === 'grid') {
+                        gridView.classList.remove('hidden');
+                        listView.classList.add('hidden');
+                    } else {
+                        gridView.classList.add('hidden');
+                        listView.classList.remove('hidden');
+                    }
+                });
+            });
+        }
+        
+        // Chatbot Functionality
+        function initChatbot() {
+            const chatToggle = document.getElementById('chat-toggle');
+            const chatWindow = document.getElementById('chat-window');
+            const closeChat = document.getElementById('close-chat');
+            
+            chatToggle.addEventListener('click', () => {
+                chatWindow.classList.toggle('hidden');
+                if (!chatWindow.classList.contains('hidden')) {
+                    // Focus on input when opening
+                    const input = chatWindow.querySelector('input[type="text"]');
+                    if (input) {
+                        setTimeout(() => input.focus(), 100);
+                    }
+                }
+            });
+            
+            closeChat.addEventListener('click', () => {
+                chatWindow.classList.add('hidden');
+            });
+            
+            // Close chat when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!chatWindow.contains(e.target) && !chatToggle.contains(e.target)) {
+                    chatWindow.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Drag and Drop functionality
+        function initDragAndDrop() {
+            const dropZones = document.querySelectorAll('.drag-drop-zone');
+            
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    zone.classList.add('drag-over');
+                });
+                
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('drag-over');
+                });
+                
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    // TODO: Handle file upload logic
+                    console.log('Files dropped:', e.dataTransfer.files);
+                });
+            });
+        }
+        
+        // Initialize all functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            initTabNavigation();
+            initGalleryViewToggle();
+            initChatbot();
+            initDragAndDrop();
+        });
+    })();
+    </script>
+</body>
+</html>

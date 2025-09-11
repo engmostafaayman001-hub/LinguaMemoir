@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة التحكم - نظام الكاشير{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3 text-primary">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            لوحة التحكم
+        </h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">مبيعات اليوم</h6>
+                        <h4>{{ "%.2f"|format(today_revenue) }} جنية</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">معاملات اليوم</h6>
+                        <h4>{{ today_transactions }}</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-shopping-cart fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">مبيعات الأسبوع</h6>
+                        <h4>{{ "%.2f"|format(week_revenue) }} جنية</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calendar-week fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">إجمالي المنتجات</h6>
+                        <h4>{{ total_products }}</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-boxes fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Low Stock Alert -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تنبيهات المخزون المنخفض
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if low_stock_products %}
+                    <div class="list-group list-group-flush">
+                        {% for product in low_stock_products[:10] %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                <strong>{{ product.name_ar }}</strong>
+                                <br>
+                                <small class="text-muted">{{ product.sku }}</small>
+                            </div>
+                            <span class="badge bg-danger">{{ product.quantity }} متبقي</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if low_stock_products|length > 10 %}
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('inventory') }}" class="btn btn-outline-primary btn-sm">
+                            عرض الكل ({{ low_stock_products|length }})
+                        </a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-check-circle fa-3x mb-3"></i>
+                        <p>جميع المنتجات متوفرة بكميات كافية</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Sales -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    آخر المبيعات
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if recent_sales %}
+                    <div class="list-group list-group-flush">
+                        {% for sale in recent_sales %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">فاتورة {{ sale.invoice_number }}</h6>
+                                <small>{{ sale.created_at.strftime('%H:%M') if sale.created_at else 'غير محدد' }}</small>
+                            </div>
+                            <p class="mb-1">
+                                <strong>{{ "%.2f"|format(sale.total_amount) }} ر.س</strong>
+                                - {{ sale.customer_name or 'عميل عادي' }}
+                            </p>
+                            <small class="text-muted">{{ sale.employee.full_name }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-receipt fa-3x mb-3"></i>
+                        <p>لا توجد مبيعات حتى الآن</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+{% if current_user.has_permission('make_sales') %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    إجراءات سريعة
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2">
+                        <a href="{{ url_for('pos') }}" class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-shopping-cart d-block mb-1"></i>
+                            نقطة البيع
+                        </a>
+                    </div>
+                    {% if current_user.has_permission('manage_products') %}
+                    <div class="col-md-2">
+                        <a href="{{ url_for('add_product') }}" class="btn btn-success w-100 mb-2">
+                            <i class="fas fa-plus d-block mb-1"></i>
+                            إضافة منتج
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if current_user.has_permission('view_reports') %}
+                    <div class="col-md-2">
+                        <a href="{{ url_for('sales_report') }}" class="btn btn-info w-100 mb-2">
+                            <i class="fas fa-chart-bar d-block mb-1"></i>
+                            التقارير
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if current_user.has_permission('manage_inventory') %}
+                    <div class="col-md-2">
+                        <a href="{{ url_for('inventory') }}" class="btn btn-warning w-100 mb-2">
+                            <i class="fas fa-warehouse d-block mb-1"></i>
+                            إدارة المخزون
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

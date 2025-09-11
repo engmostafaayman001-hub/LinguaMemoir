@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة المنتجات - نظام الكاشير{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3 text-primary">
+            <i class="fas fa-boxes me-2"></i>
+            إدارة المنتجات
+        </h1>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('add_product') }}" class="btn btn-success">
+            <i class="fas fa-plus me-1"></i>
+            إضافة منتج جديد
+        </a>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">البحث</label>
+                <input type="text" name="search" class="form-control" 
+                       value="{{ search }}" placeholder="البحث بالاسم أو الباركود...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">الفئة</label>
+                <select name="category_id" class="form-select">
+                    <option value="">جميع الفئات</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+                        {{ category.name_ar }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid gap-2 d-md-flex">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        بحث
+                    </button>
+                    <a href="{{ url_for('products') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        مسح
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Products Table -->
+<div class="card">
+    <div class="card-body">
+        {% if products.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>الصورة</th>
+                        <th>اسم المنتج</th>
+                        <th>الباركود</th>
+                        <th>الفئة</th>
+                        <th>السعر</th>
+                        <th>الكمية</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products.items %}
+                    <tr>
+                        <td>
+                            {% if product.image_url %}
+                            <img src="{{ product.image_url }}" alt="{{ product.name_ar }}" 
+                                 class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-light d-flex align-items-center justify-content-center" 
+                                 style="width: 60px; height: 60px;">
+                                <i class="fas fa-image text-muted"></i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ product.name_ar }}</strong>
+                            <br>
+                            <small class="text-muted">{{ product.name }}</small>
+                            <br>
+                            <small class="text-muted">SKU: {{ product.sku }}</small>
+                        </td>
+                        <td>{{ product.barcode or '-' }}</td>
+                        <td>{{ product.category.name_ar if product.category else '-' }}</td>
+                        <td>
+                            <strong>{{ "%.2f"|format(product.price) }} ر.س</strong>
+                            {% if product.cost_price %}
+                            <br>
+                            <small class="text-muted">التكلفة: {{ "%.2f"|format(product.cost_price) }} جنية</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge {% if product.is_low_stock %}bg-warning{% else %}bg-success{% endif %} fs-6">
+                                {{ product.quantity }}
+                            </span>
+                            {% if product.is_low_stock %}
+                            <br>
+                            <small class="text-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                مخزون منخفض
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.is_active %}
+                            <span class="badge bg-success">مفعل</span>
+                            {% else %}
+                            <span class="badge bg-secondary">غير مفعل</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('edit_product', product_id=product.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-info" 
+                                        data-bs-toggle="modal" data-bs-target="#productModal{{ product.id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Product Details Modal -->
+                    <div class="modal fade" id="productModal{{ product.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">تفاصيل المنتج: {{ product.name_ar }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            {% if product.image_url %}
+                                            <img src="{{ product.image_url }}" alt="{{ product.name_ar }}" 
+                                                 class="img-fluid rounded">
+                                            {% else %}
+                                            <div class="bg-light d-flex align-items-center justify-content-center rounded" 
+                                                 style="height: 200px;">
+                                                <i class="fas fa-image fa-3x text-muted"></i>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-8">
+                                            <table class="table table-borderless">
+                                                <tr>
+                                                    <th>الاسم العربي:</th>
+                                                    <td>{{ product.name_ar }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>الاسم الإنجليزي:</th>
+                                                    <td>{{ product.name }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>الباركود:</th>
+                                                    <td>{{ product.barcode or '-' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>SKU:</th>
+                                                    <td>{{ product.sku }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>الفئة:</th>
+                                                    <td>{{ product.category.name_ar if product.category else '-' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>سعر البيع:</th>
+                                                    <td>{{ "%.2f"|format(product.price) }} جنية</td>
+                                                </tr>
+                                                {% if product.cost_price %}
+                                                <tr>
+                                                    <th>سعر التكلفة:</th>
+                                                    <td>{{ "%.2f"|format(product.cost_price) }} جنية</td>
+                                                </tr>
+                                                {% endif %}
+                                                <tr>
+                                                    <th>الكمية المتوفرة:</th>
+                                                    <td>{{ product.quantity }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>الحد الأدنى:</th>
+                                                    <td>{{ product.min_quantity }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>تاريخ الإضافة:</th>
+                                                    <td>{{ product.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                                </tr>
+                                            </table>
+                                            {% if product.description %}
+                                            <div class="mt-3">
+                                                <h6>الوصف:</h6>
+                                                <p>{{ product.description }}</p>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                                    <a href="{{ url_for('edit_product', product_id=product.id) }}" class="btn btn-primary">تعديل</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if products.pages > 1 %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% for page_num in products.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != products.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('products', page=page_num, search=search, category_id=selected_category) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+            <h5>لا توجد منتجات</h5>
+            <p class="text-muted">لم يتم العثور على أي منتجات تطابق معايير البحث</p>
+            <a href="{{ url_for('add_product') }}" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i>
+                إضافة منتج جديد
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
