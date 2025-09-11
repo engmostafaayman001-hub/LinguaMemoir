@@ -8,3 +8,5 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
+      - key: DATABASE_URL
+        value: postgresql://cashier:pdpRu3VirYgp6NGCpNLpZTrIU2WHebxk@dpg-d31lnandiees7381uoh0-a.oregon-postgres.render.com:5432/cashier_0r0y
