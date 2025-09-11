@@ -100,7 +100,7 @@
                             <strong>{{ "%.2f"|format(product.price) }} ر.س</strong>
                             {% if product.cost_price %}
                             <br>
-                            <small class="text-muted">التكلفة: {{ "%.2f"|format(product.cost_price) }} ر.س</small>
+                            <small class="text-muted">التكلفة: {{ "%.2f"|format(product.cost_price) }} جنية</small>
                             {% endif %}
                         </td>
                         <td>
@@ -181,12 +181,12 @@
                                                 </tr>
                                                 <tr>
                                                     <th>سعر البيع:</th>
-                                                    <td>{{ "%.2f"|format(product.price) }} ر.س</td>
+                                                    <td>{{ "%.2f"|format(product.price) }} جنية</td>
                                                 </tr>
                                                 {% if product.cost_price %}
                                                 <tr>
                                                     <th>سعر التكلفة:</th>
-                                                    <td>{{ "%.2f"|format(product.cost_price) }} ر.س</td>
+                                                    <td>{{ "%.2f"|format(product.cost_price) }} جنية</td>
                                                 </tr>
                                                 {% endif %}
                                                 <tr>

@@ -59,8 +59,8 @@ with app.app_context():
             email='admin@pos.com',
             full_name='المدير العام',
             role='admin',
-            password_hash=generate_password_hash('admin123')
+            password_hash=generate_password_hash('Markode123@@@')
         )
         db.session.add(admin)
         db.session.commit()
-        print("تم إنشاء حساب المدير الافتراضي: admin/admin123")
+        print("تم إنشاء حساب المدير الافتراضي:")

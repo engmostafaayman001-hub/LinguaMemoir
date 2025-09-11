@@ -47,7 +47,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h6 class="card-title">إجمالي الإيرادات</h6>
-                        <h4>{{ "%.2f"|format(total_revenue) }} ر.س</h4>
+                        <h4>{{ "%.2f"|format(total_revenue) }} جنية</h4>
                     </div>
                     <div class="align-self-center">
                         <i class="fas fa-money-bill-wave fa-2x opacity-75"></i>
@@ -81,9 +81,9 @@
                         <h6 class="card-title">متوسط قيمة المعاملة</h6>
                         <h4>
                             {% if total_transactions > 0 %}
-                            {{ "%.2f"|format(total_revenue / total_transactions) }} ر.س
+                            {{ "%.2f"|format(total_revenue / total_transactions) }} جنية
                             {% else %}
-                            0.00 ر.س
+                            0.00 جنية
                             {% endif %}
                         </h4>
                     </div>
@@ -140,11 +140,11 @@
                         <td>{{ sale.employee.full_name }}</td>
                         <td>{{ sale.customer_name or 'عميل عادي' }}</td>
                         <td>
-                            <strong class="text-success">{{ "%.2f"|format(sale.total_amount) }} ر.س</strong>
+                            <strong class="text-success">{{ "%.2f"|format(sale.total_amount) }} جنية</strong>
                         </td>
                         <td>
                             {% if sale.discount_amount > 0 %}
-                            <span class="text-warning">-{{ "%.2f"|format(sale.discount_amount) }} ر.س</span>
+                            <span class="text-warning">-{{ "%.2f"|format(sale.discount_amount) }} جنية</span>
                             {% else %}
                             -
                             {% endif %}
@@ -218,8 +218,8 @@
                                                 <tr>
                                                     <td>{{ item.product.name_ar }}</td>
                                                     <td>{{ item.quantity }}</td>
-                                                    <td>{{ "%.2f"|format(item.unit_price) }} ر.س</td>
-                                                    <td>{{ "%.2f"|format(item.total_price) }} ر.س</td>
+                                                    <td>{{ "%.2f"|format(item.unit_price) }} جنية</td>
+                                                    <td>{{ "%.2f"|format(item.total_price) }} جنية</td>
                                                 </tr>
                                                 {% endfor %}
                                             </tbody>
@@ -232,12 +232,12 @@
                                                 <strong>المجموع الفرعي:</strong> {{ "%.2f"|format(sale.total_amount + sale.discount_amount) }} ر.س
                                             </div>
                                             <div class="col-md-6">
-                                                <strong>الخصم:</strong> {{ "%.2f"|format(sale.discount_amount) }} ر.س
+                                                <strong>الخصم:</strong> {{ "%.2f"|format(sale.discount_amount) }} جنية
                                             </div>
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6">
-                                                <strong>الإجمالي النهائي:</strong> {{ "%.2f"|format(sale.total_amount) }} ر.س
+                                                <strong>الإجمالي النهائي:</strong> {{ "%.2f"|format(sale.total_amount) }} جنية
                                             </div>
                                             <div class="col-md-6">
                                                 <strong>طريقة الدفع:</strong> 
