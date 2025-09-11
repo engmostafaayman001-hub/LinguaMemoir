@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: lingua-memoir
+    env: python
+    buildCommand: pip install pyproject.toml
+    startCommand: gunicorn app:app
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
