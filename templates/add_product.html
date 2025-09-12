@@ -127,76 +127,76 @@
         </div>
     </div>
 </div>
-
-<!-- Barcode Scanner Modal -->
+<!-- مودال ماسح الباركود -->
 <div class="modal fade" id="barcodeModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">مسح الباركود</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="stopScanner()"></button>
-            </div>
-            <div class="modal-body">
-                <div class="scanner-options">
-                    <button class="btn btn-success me-1" onclick="startCamera('environment')">كاميرا خلفية</button>
-                    <button class="btn btn-secondary me-1" onclick="startCamera('user')">كاميرا أمامية</button>
-                    <label class="btn btn-primary mb-0">
-                        رفع ملف
-                        <input type="file" accept="image/*" style="display:none" onchange="scanFile(this)">
-                    </label>
-                </div>
-                <div id="qr-reader"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="stopScanner()">إغلاق</button>
-            </div>
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">مسح الباركود</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="stopScanner()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="scanner-options">
+          <button class="btn btn-success me-1" onclick="startCamera('environment')">كاميرا خلفية</button>
+          <button class="btn btn-secondary me-1" onclick="startCamera('user')">كاميرا أمامية</button>
+          <label class="btn btn-primary mb-0">
+            رفع صورة
+            <input type="file" accept="image/*" style="display:none" onchange="scanFile(this)">
+          </label>
         </div>
+        <div id="qr-reader" style="width:100%; height:60vh;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="stopScanner()">إغلاق</button>
+      </div>
     </div>
+  </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
 let html5QrCode;
 
+// فتح مودال الباركود
 function openBarcodeModal() {
     const modal = new bootstrap.Modal(document.getElementById('barcodeModal'));
     modal.show();
 }
 
+// بدء الكاميرا
 function startCamera(facingMode) {
-    if(html5QrCode){
-        html5QrCode.stop().catch(()=>{});
-    }
+    if(html5QrCode) html5QrCode.stop().catch(()=>{});
     html5QrCode = new Html5Qrcode("qr-reader");
 
     html5QrCode.start(
         { facingMode: facingMode },
         { fps: 10, qrbox: 250 },
         decodedText => {
-            document.getElementById("productBarcode").value = decodedText;
+            document.getElementById("barcode").value = decodedText;
             stopScanner();
         },
-        errorMessage => {}
-    ).catch(err=>{
-        alert("تعذر الوصول إلى الكاميرا: " + err);
+        errorMessage => {
+            // يمكن تركها فارغة
+        }
+    ).catch(err => {
+        alert("تعذر الوصول للكاميرا: " + err);
     });
 }
 
+// مسح صورة تم رفعها
 function scanFile(input) {
     if(!input.files || !input.files[0]) return;
-    if(html5QrCode){
-        html5QrCode.stop().catch(()=>{});
-    }
+    if(html5QrCode) html5QrCode.stop().catch(()=>{});
     html5QrCode = new Html5Qrcode("qr-reader");
+
     html5QrCode.scanFile(input.files[0], true)
-        .then(decodedText=>{
-            document.getElementById("productBarcode").value = decodedText;
+        .then(decodedText => {
+            document.getElementById("barcode").value = decodedText;
             stopScanner();
         })
-        .catch(err=>console.error(err));
+        .catch(err => alert("تعذر قراءة الباركود من الصورة"));
 }
 
+// إيقاف الماسح
 function stopScanner(){
     if(html5QrCode){
         html5QrCode.stop().catch(()=>{});
@@ -204,6 +204,7 @@ function stopScanner(){
     const modalEl = document.getElementById('barcodeModal');
     bootstrap.Modal.getInstance(modalEl)?.hide();
 }
+
 
 // معاينة الصورة قبل الرفع
 document.getElementById('productImageInput').addEventListener('change', function(event) {
