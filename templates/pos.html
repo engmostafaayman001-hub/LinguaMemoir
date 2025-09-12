@@ -166,8 +166,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/barcode-scanner.js') }}"></script>
-<script src="{{ url_for('static', filename='js/pos.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.4/minified/html5-qrcode.min.js"></script>
 
 <script>
@@ -184,17 +182,25 @@ function startCamera(facingMode) {
     }
     html5QrCode = new Html5Qrcode("qr-reader");
 
-    html5QrCode.start(
-        { facingMode: facingMode },
-        { fps: 10, qrbox: 250 },
-        decodedText => {
-            document.getElementById("productSearch").value = decodedText;
-            searchProducts();
-            stopScanner();
-        },
-        errorMessage => {}
-    ).catch(err=>{
-        alert("تعذر الوصول إلى الكاميرا: " + err);
+    Html5Qrcode.getCameras().then(cameras => {
+        if(!cameras.length){
+            alert("لا توجد كاميرات متاحة على هذا الجهاز");
+            return;
+        }
+        html5QrCode.start(
+            { facingMode: facingMode },
+            { fps: 10, qrbox: 250 },
+            decodedText => {
+                document.getElementById("productSearch").value = decodedText;
+                if(typeof searchProducts === "function"){ searchProducts(); }
+                stopScanner();
+            },
+            errorMessage => {}
+        ).catch(err=>{
+            alert("خطأ في تشغيل الكاميرا: " + err);
+        });
+    }).catch(err=>{
+        alert("لم يمكن الحصول على الكاميرات: " + err);
     });
 }
 
@@ -207,10 +213,10 @@ function scanFile(input) {
     html5QrCode.scanFile(input.files[0], true)
         .then(decodedText=>{
             document.getElementById("productSearch").value = decodedText;
-            searchProducts();
+            if(typeof searchProducts === "function"){ searchProducts(); }
             stopScanner();
         })
-        .catch(err=>console.error(err));
+        .catch(err=>alert("تعذر قراءة الملف: " + err));
 }
 
 function stopScanner(){

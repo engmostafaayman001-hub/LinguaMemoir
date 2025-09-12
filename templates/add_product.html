@@ -7,12 +7,19 @@
 <style>
   #qr-reader {
       width: 100% !important;
-      height: 80vh;
+      height: 60vh;
       max-width: 700px;
       margin: 0 auto;
   }
   #barcodeModal .modal-body {
       padding: 0;
+  }
+  .scanner-options {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
   }
 </style>
 {% endblock %}
@@ -68,8 +75,8 @@
                                 <button type="button" class="btn btn-dark" onclick="document.getElementById('productBarcode').focus()">
                                     <i class="fas fa-keyboard me-1"></i> جهاز الباركود
                                 </button>
-                                <button type="button" class="btn btn-success" onclick="startBarcodeScanner()">
-                                    <i class="fas fa-camera me-1"></i> كاميرا الهاتف
+                                <button type="button" class="btn btn-success" onclick="openBarcodeModal()">
+                                    <i class="fas fa-camera me-1"></i> ماسح الباركود
                                 </button>
                             </div>
                         </div>
@@ -121,16 +128,24 @@
     </div>
 </div>
 
-<!-- مودال ماسح الباركود -->
+<!-- Barcode Scanner Modal -->
 <div class="modal fade" id="barcodeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">مسح الباركود عبر الكاميرا</h5>
+                <h5 class="modal-title">مسح الباركود</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="stopScanner()"></button>
             </div>
-            <div class="modal-body p-0">
-                <div id="qr-reader" style="width:100%; height:80vh;"></div>
+            <div class="modal-body">
+                <div class="scanner-options">
+                    <button class="btn btn-success me-1" onclick="startCamera('environment')">كاميرا خلفية</button>
+                    <button class="btn btn-secondary me-1" onclick="startCamera('user')">كاميرا أمامية</button>
+                    <label class="btn btn-primary mb-0">
+                        رفع ملف
+                        <input type="file" accept="image/*" style="display:none" onchange="scanFile(this)">
+                    </label>
+                </div>
+                <div id="qr-reader"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="stopScanner()">إغلاق</button>
@@ -144,39 +159,46 @@
 <script>
 let html5QrCode;
 
-function startBarcodeScanner() {
-    const modalEl = document.getElementById('barcodeModal');
-    const modal = new bootstrap.Modal(modalEl);
+function openBarcodeModal() {
+    const modal = new bootstrap.Modal(document.getElementById('barcodeModal'));
     modal.show();
-
-    modalEl.addEventListener('shown.bs.modal', () => {
-        html5QrCode = new Html5Qrcode("qr-reader");
-        Html5Qrcode.getCameras().then(cameras => {
-            if (cameras && cameras.length) {
-                // استخدم الكاميرا الخلفية إذا متاحة
-                const cameraId = cameras.find(cam => cam.facingMode === "environment")?.id || cameras[0].id;
-                html5QrCode.start(
-                    cameraId,
-                    { fps: 10, qrbox: 250 },
-                    decodedText => {
-                        document.getElementById("productBarcode").value = decodedText;
-                        stopScanner();
-                    },
-                    errorMessage => {}
-                ).catch(err => console.error(err));
-            } else {
-                alert("لا توجد كاميرات متاحة");
-            }
-        }).catch(err => console.error(err));
-    }, { once: true });
-
-    modalEl.addEventListener('hidden.bs.modal', () => {
-        stopScanner();
-    }, { once: true });
 }
 
-function stopScanner() {
-    if (html5QrCode) {
+function startCamera(facingMode) {
+    if(html5QrCode){
+        html5QrCode.stop().catch(()=>{});
+    }
+    html5QrCode = new Html5Qrcode("qr-reader");
+
+    html5QrCode.start(
+        { facingMode: facingMode },
+        { fps: 10, qrbox: 250 },
+        decodedText => {
+            document.getElementById("productBarcode").value = decodedText;
+            stopScanner();
+        },
+        errorMessage => {}
+    ).catch(err=>{
+        alert("تعذر الوصول إلى الكاميرا: " + err);
+    });
+}
+
+function scanFile(input) {
+    if(!input.files || !input.files[0]) return;
+    if(html5QrCode){
+        html5QrCode.stop().catch(()=>{});
+    }
+    html5QrCode = new Html5Qrcode("qr-reader");
+    html5QrCode.scanFile(input.files[0], true)
+        .then(decodedText=>{
+            document.getElementById("productBarcode").value = decodedText;
+            stopScanner();
+        })
+        .catch(err=>console.error(err));
+}
+
+function stopScanner(){
+    if(html5QrCode){
         html5QrCode.stop().catch(()=>{});
     }
     const modalEl = document.getElementById('barcodeModal');
