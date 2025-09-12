@@ -24,7 +24,13 @@
             <div class="card-body">
                 <form method="POST" enctype="multipart/form-data">
                     {{ form.hidden_tag() }}
-                    
+
+                    <!-- معاينة الصورة قبل الرفع -->
+                    <div class="mb-3 text-center">
+                        <img id="productImagePreview" src="" alt="معاينة الصورة" 
+                             class="img-thumbnail" style="max-width:200px; max-height:200px; display:none;">
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -69,8 +75,20 @@
                                 {{ form.barcode.label(class="form-label") }}
                                 <div class="input-group">
                                     {{ form.barcode(class="form-control", id="barcode") }}
-                                    <button type="button" class="btn btn-outline-secondary" onclick="generateBarcode()">
+
+                                    <!-- زر توليد باركود -->
+                                    <button type="button" class="btn btn-outline-secondary" onclick="generateBarcode()" title="توليد باركود">
                                         <i class="fas fa-magic"></i>
+                                    </button>
+
+                                    <!-- زر قارئ الباركود (جهاز) -->
+                                    <button type="button" class="btn btn-outline-primary" onclick="focusBarcodeInput()" title="قارئ الباركود">
+                                        <i class="fas fa-barcode"></i>
+                                    </button>
+
+                                    <!-- زر استخدام كاميرا الهاتف -->
+                                    <button type="button" class="btn btn-outline-success" onclick="startCameraScan()" title="استخدام الكاميرا">
+                                        <i class="fas fa-camera"></i>
                                     </button>
                                 </div>
                                 {% for error in form.barcode.errors %}
@@ -80,7 +98,9 @@
                         </div>
                     </div>
 
-                    <!-- حقل الفئة كنص -->
+                    <!-- مكان عرض الكاميرا -->
+                    <div id="reader" style="width:300px; display:none; margin-top:10px;"></div>
+
                     <div class="mb-3">
                         {{ form.category_name.label(class="form-label") }}
                         {{ form.category_name(class="form-control", placeholder="اكتب اسم الفئة أو اختر فئة موجودة") }}
@@ -117,6 +137,22 @@
                         </div>
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label">الحالة</label>
+                        <div>
+                            <label class="form-check-label me-2">
+                                <input type="radio" name="is_active" value="1" class="form-check-input"
+                                {% if form.is_active.data == True %}checked{% endif %}>
+                                متوفر
+                            </label>
+                            <label class="form-check-label">
+                                <input type="radio" name="is_active" value="0" class="form-check-input"
+                                {% if form.is_active.data == False %}checked{% endif %}>
+                                غير متوفر
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -141,7 +177,7 @@
 
                     <div class="mb-3">
                         {{ form.image.label(class="form-label") }}
-                        {{ form.image(class="form-control") }}
+                        {{ form.image(class="form-control", id="productImageInput") }}
                         {% for error in form.image.errors %}
                             <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
@@ -163,6 +199,8 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- مكتبة قراءة QR/Barcode بالكاميرا -->
+<script src="https://unpkg.com/html5-qrcode"></script>
 <script>
 function generateBarcode() {
     const timestamp = Date.now().toString();
@@ -170,5 +208,38 @@ function generateBarcode() {
     const barcode = timestamp.slice(-8) + randomSuffix;
     document.getElementById('barcode').value = barcode;
 }
+
+function focusBarcodeInput() {
+    // يركز على الحقل ليكتب فيه جهاز الباركود العادي (USB/بلوتوث)
+    document.getElementById("barcode").focus();
+}
+
+function startCameraScan() {
+    const reader = document.getElementById("reader");
+    reader.style.display = "block"; // إظهار الكاميرا
+
+    function onScanSuccess(decodedText) {
+        document.getElementById("barcode").value = decodedText;
+        html5QrcodeScanner.clear(); // إيقاف الكاميرا بعد القراءة
+        reader.style.display = "none"; // إخفاء الكاميرا
+    }
+
+    var html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(onScanSuccess);
+}
+
+// معاينة الصورة قبل الرفع
+document.getElementById('productImageInput').addEventListener('change', function(event) {
+    const [file] = event.target.files;
+    const preview = document.getElementById('productImagePreview');
+    if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'inline-block';
+    } else {
+        preview.style.display = 'none';
+        preview.src = "";
+    }
+});
 </script>
 {% endblock %}

@@ -88,10 +88,8 @@
                             {% endif %}
                         </td>
                         <td>
-                            <strong>{{ product.name_ar }}</strong>
-                            <br>
-                            <small class="text-muted">{{ product.name }}</small>
-                            <br>
+                            <strong>{{ product.name_ar }}</strong><br>
+                            <small class="text-muted">{{ product.name }}</small><br>
                             <small class="text-muted">SKU: {{ product.sku }}</small>
                         </td>
                         <td>{{ product.barcode or '-' }}</td>
@@ -139,46 +137,10 @@
                             </div>
                         </td>
                     </tr>
-                    
-                    <!-- Product Details Modal -->
-                    <div class="modal fade" id="productModal{{ product.id }}" tabindex="-1">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <!-- محتوى التفاصيل كما في الكود السابق -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Delete Confirmation Modal -->
-                    <div class="modal fade" id="deleteModal{{ product.id }}" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title text-danger">تأكيد حذف المنتج</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    هل أنت متأكد من حذف المنتج: <strong>{{ product.name_ar }}</strong>؟
-                                    <br>
-                                    لن يمكن التراجع عن هذا الإجراء.
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                                    <form method="POST" action="{{ url_for('delete_product', product_id=product.id) }}">
-                                        <button type="submit" class="btn btn-danger">حذف نهائي</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        
-        <!-- Pagination كما في الكود السابق -->
-        
         {% else %}
         <div class="text-center py-5">
             <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
@@ -192,4 +154,77 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Modals: تفاصيل المنتج والحذف -->
+{% for product in products.items %}
+<!-- تفاصيل المنتج -->
+<div class="modal fade" id="productModal{{ product.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تفاصيل المنتج: {{ product.name_ar }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-4 text-center">
+                        {% if product.image_url %}
+                        <img src="{{ product.image_url }}" class="img-fluid rounded" alt="{{ product.name_ar }}">
+                        {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center" 
+                             style="width: 100%; height: 200px;">
+                            <i class="fas fa-image text-muted fa-3x"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-8">
+                        <p><strong>الاسم:</strong> {{ product.name_ar }}</p>
+                        <p><strong>الاسم الإنجليزي:</strong> {{ product.name }}</p>
+                        <p><strong>الوصف:</strong> {{ product.description or '-' }}</p>
+                        <p><strong>SKU:</strong> {{ product.sku }}</p>
+                        <p><strong>الباركود:</strong> {{ product.barcode or '-' }}</p>
+                        <p><strong>الفئة:</strong> {{ product.category.name_ar if product.category else '-' }}</p>
+                        <p><strong>السعر:</strong> {{ "%.2f"|format(product.price) }} جنية</p>
+                        {% if product.cost_price %}
+                        <p><strong>التكلفة:</strong> {{ "%.2f"|format(product.cost_price) }} جنية</p>
+                        {% endif %}
+                        <p><strong>الكمية:</strong> {{ product.quantity }}</p>
+                        <p><strong>الحالة:</strong>
+                            {% if product.is_active %}
+                            <span class="badge bg-success">مفعل</span>
+                            {% else %}
+                            <span class="badge bg-secondary">غير مفعل</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال الحذف -->
+<div class="modal fade" id="deleteModal{{ product.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                هل أنت متأكد من حذف المنتج: <strong>{{ product.name_ar }}</strong>؟
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <form method="POST" action="{{ url_for('delete_product', product_id=product.id) }}">
+                    <button type="submit" class="btn btn-danger">حذف نهائي</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}

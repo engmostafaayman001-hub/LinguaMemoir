@@ -4,6 +4,18 @@
 
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.4/minified/html5-qrcode.min.js"></script>
+<style>
+  /* تعديل حجم ماسح الباركود */
+  #qr-reader {
+      width: 100% !important;
+      height: 80vh; /* يغطي 80% من ارتفاع الشاشة */
+      max-width: 700px;
+      margin: 0 auto;
+  }
+  #barcodeModal .modal-body {
+      padding: 0;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -21,8 +33,8 @@
     <div class="col-md-8">
         <div class="card mb-4">
             <div class="card-header">
-                <div class="row">
-                    <div class="col-md-8">
+                <div class="row g-2">
+                    <div class="col-md-6">
                         <div class="input-group">
                             <input type="text" id="productSearch" class="form-control" 
                                    placeholder="البحث بالاسم أو الباركود...">
@@ -31,40 +43,28 @@
                             </button>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <button class="btn btn-dark w-100" onclick="useBarcodeDevice()">
+                            <i class="fas fa-keyboard me-1"></i>
+                            جهاز الباركود
+                        </button>
+                    </div>
+                    <div class="col-md-3">
                         <button class="btn btn-success w-100" onclick="startBarcodeScanner()">
-                            <i class="fas fa-barcode me-1"></i>
-                            مسح الباركود
+                            <i class="fas fa-camera me-1"></i>
+                            كاميرا الهاتف
                         </button>
                     </div>
                 </div>
             </div>
             <div class="card-body">
                 <div id="searchResults" class="row g-3">
-                    <!-- Search results will appear here -->
-                </div>
-                
-                <!-- Barcode Scanner Modal -->
-                <div class="modal fade" id="barcodeModal" tabindex="-1">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">مسح الباركود</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div id="qr-reader" style="width: 100%; height: 300px;"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- نتائج البحث -->
                 </div>
             </div>
         </div>
     </div>
-    
+
     <!-- Shopping Cart -->
     <div class="col-md-4">
         <div class="card sticky-top">
@@ -82,7 +82,6 @@
                     </div>
                 </div>
                 
-                <!-- Customer Info -->
                 <div class="mb-3">
                     <label class="form-label">اسم العميل (اختياري)</label>
                     <input type="text" id="customerName" class="form-control" placeholder="اسم العميل">
@@ -93,16 +92,14 @@
                     <input type="text" id="customerPhone" class="form-control" placeholder="رقم الهاتف">
                 </div>
                 
-                <!-- Discount -->
                 <div class="mb-3">
                     <label class="form-label">خصم</label>
                     <div class="input-group">
                         <input type="number" id="discountAmount" class="form-control" value="0" min="0" step="0.01">
-                        <span class="input-group-text">جنية</span>
+                        <span class="input-group-text">جنيه</span>
                     </div>
                 </div>
                 
-                <!-- Payment Method -->
                 <div class="mb-3">
                     <label class="form-label">طريقة الدفع</label>
                     <select id="paymentMethod" class="form-select">
@@ -112,23 +109,21 @@
                     </select>
                 </div>
                 
-                <!-- Total -->
                 <div class="border-top pt-3">
                     <div class="d-flex justify-content-between mb-2">
                         <span>المجموع الفرعي:</span>
-                        <span id="subtotal">0.00 جنية</span>
+                        <span id="subtotal">0.00 جنيه</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>الخصم:</span>
-                        <span id="discount">0.00 جنية</span>
+                        <span id="discount">0.00 جنيه</span>
                     </div>
                     <div class="d-flex justify-content-between h5">
                         <strong>الإجمالي:</strong>
-                        <strong id="total">0.00 جنية</strong>
+                        <strong id="total">0.00 جنيه</strong>
                     </div>
                 </div>
                 
-                <!-- Actions -->
                 <div class="d-grid gap-2 mt-3">
                     <button class="btn btn-success btn-lg" onclick="processSale()" disabled id="checkoutBtn">
                         <i class="fas fa-credit-card me-1"></i>
@@ -143,9 +138,63 @@
         </div>
     </div>
 </div>
+
+<!-- 🔹 مودال ماسح الباركود -->
+<div class="modal fade" id="barcodeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">مسح الباركود عبر الكاميرا</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="qr-reader"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/barcode-scanner.js') }}"></script>
 <script src="{{ url_for('static', filename='js/pos.js') }}"></script>
+
+<script>
+let html5QrCode;
+
+function useBarcodeDevice() {
+    document.getElementById("productSearch").focus();
+}
+
+function startBarcodeScanner() {
+    const modalEl = document.getElementById('barcodeModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+
+    html5QrCode = new Html5Qrcode("qr-reader");
+    Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250 },
+                (decodedText) => {
+                    document.getElementById("productSearch").value = decodedText;
+                    modal.hide();
+                    html5QrCode.stop().catch(err => console.error(err));
+                    searchProducts();
+                }
+            );
+        }
+    }).catch(err => console.error(err));
+
+    modalEl.addEventListener('hidden.bs.modal', () => {
+        if (html5QrCode) {
+            html5QrCode.stop().catch(err => console.error(err));
+        }
+    });
+}
+</script>
 {% endblock %}

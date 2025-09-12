@@ -11,7 +11,7 @@ class Employee(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     full_name = db.Column(db.String(100), nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default='cashier')  # admin, manager, cashier
+    role = db.Column(db.String(20), nullable=False, default='cashier')
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -21,10 +21,11 @@ class Employee(UserMixin, db.Model):
     def has_permission(self, permission):
         permissions = {
             'admin': ['manage_employees', 'manage_inventory', 'view_reports', 'make_sales', 'manage_products'],
-            'manager': ['manage_inventory', 'view_reports', 'make_sales', 'manage_products'],
+            'manager': ['manage_inventory', 'view_reports', 'edit_products', 'make_sales', 'manage_products'],
             'cashier': ['make_sales']
         }
         return permission in permissions.get(self.role, [])
+
 
 # ==========================
 # نموذج الفئة
@@ -38,6 +39,7 @@ class Category(db.Model):
 
     # العلاقات
     products = db.relationship('Product', backref='category', lazy=True)
+
 
 # ==========================
 # نموذج المنتج
@@ -56,7 +58,9 @@ class Product(db.Model):
     image_url = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # Foreign Key
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
@@ -68,6 +72,7 @@ class Product(db.Model):
     @property
     def is_low_stock(self):
         return self.quantity <= self.min_quantity
+
 
 # ==========================
 # نموذج البيع
@@ -90,6 +95,7 @@ class Sale(db.Model):
     # العلاقات
     items = db.relationship('SaleItem', backref='sale', lazy=True, cascade='all, delete-orphan')
 
+
 # ==========================
 # عناصر البيع
 # ==========================
@@ -100,9 +106,14 @@ class SaleItem(db.Model):
     total_price = db.Column(db.Numeric(10, 2), nullable=False)
     discount_amount = db.Column(db.Numeric(10, 2), default=0)
 
+    # نسخة من بيانات المنتج وقت البيع
+    product_name = db.Column(db.String(200))
+    product_sku = db.Column(db.String(50))
+
     # Foreign Keys
     sale_id = db.Column(db.Integer, db.ForeignKey('sale.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+
 
 # ==========================
 # حركة المخزون

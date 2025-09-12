@@ -31,9 +31,10 @@
                 <label class="form-label">نوع الحركة</label>
                 <select name="movement_type" class="form-select">
                     <option value="">كل الأنواع</option>
-                    <option value="in" {% if selected_type == 'in' %}selected{% endif %}>إضافة مخزون</option>
-                    <option value="out" {% if selected_type == 'out' %}selected{% endif %}>صرف مخزون</option>
+                    <option value="in" {% if selected_type == 'in' %}selected{% endif %}>إضافة</option>
+                    <option value="out" {% if selected_type == 'out' %}selected{% endif %}>بيع</option>
                     <option value="adjustment" {% if selected_type == 'adjustment' %}selected{% endif %}>تعديل</option>
+                    <option value="delete" {% if selected_type == 'delete' %}selected{% endif %}>حذف</option>
                 </select>
             </div>
             <div class="col-md-4">
@@ -78,11 +79,35 @@
                         <td>{{ loop.index + (logs.page - 1) * logs.per_page }}</td>
                         <td>{{ log.product.name_ar if log.product else '-' }}</td>
                         <td>{{ log.employee.full_name if log.employee else '-' }}</td>
-                        <td>{{ log.movement_type|capitalize }}</td>
+                        <td>
+                            {% if log.movement_type == 'in' %}
+                                إضافة
+                            {% elif log.movement_type == 'out' %}
+                                بيع
+                            {% elif log.movement_type == 'adjustment' %}
+                                تعديل
+                            {% elif log.movement_type == 'delete' %}
+                                حذف
+                            {% else %}
+                                {{ log.movement_type }}
+                            {% endif %}
+                        </td>
                         <td>{{ log.quantity }}</td>
                         <td>{{ log.previous_quantity }}</td>
                         <td>{{ log.new_quantity }}</td>
-                        <td>{{ log.reason or '-' }}</td>
+                        <td>
+                            {% if log.movement_type == 'in' %}
+                                أضاف الموظف {{ log.employee.full_name if log.employee else '-' }} العنصر {{ log.product.name_ar if log.product else '-' }}
+                            {% elif log.movement_type == 'out' %}
+                                باع الموظف {{ log.employee.full_name if log.employee else '-' }} العنصر {{ log.product.name_ar if log.product else '-' }}
+                            {% elif log.movement_type == 'adjustment' %}
+                                عدل الموظف {{ log.employee.full_name if log.employee else '-' }} العنصر {{ log.product.name_ar if log.product else '-' }}
+                            {% elif log.movement_type == 'delete' %}
+                                حذف الموظف {{ log.employee.full_name if log.employee else '-' }} العنصر {{ log.product.name_ar if log.product else '-' }}
+                            {% else %}
+                                {{ log.reason or '-' }}
+                            {% endif %}
+                        </td>
                         <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                     </tr>
                     {% endfor %}

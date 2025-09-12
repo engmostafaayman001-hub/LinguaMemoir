@@ -6,9 +6,7 @@ from flask_login import LoginManager
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import generate_password_hash
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
+from flask_migrate import Migrate
 
 # ==========================
 # 1️⃣ إنشاء كائن Flask أولاً
@@ -17,9 +15,9 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "fallback_secret_key_for_development")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# ==========================
+# ========================
 # 2️⃣ إعدادات قاعدة البيانات
-# ==========================
+# ========================
 class Base(DeclarativeBase):
     pass
 
@@ -35,9 +33,11 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # ==========================
-# 3️⃣ تهيئة SQLAlchemy و LoginManager
+# 3️⃣ تهيئة SQLAlchemy و Migrate و LoginManager
 # ==========================
 db = SQLAlchemy(app, model_class=Base)
+migrate = Migrate(app, db)  # ⚡ هنا بعد تعريف app و db
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'يرجى تسجيل الدخول للوصول لهذه الصفحة'
@@ -72,3 +72,10 @@ with app.app_context():
         db.session.add(admin)
         db.session.commit()
         print("تم إنشاء حساب المدير الافتراضي")
+
+# ==========================
+# 6️⃣ إعداد اللوجين الرئيسي (اختياري لتشغيل السيرفر مباشرة)
+# ==========================
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    app.run(debug=True)

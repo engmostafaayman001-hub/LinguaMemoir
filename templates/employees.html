@@ -38,44 +38,42 @@
                 <tbody>
                     {% for employee in employees %}
                     <tr>
-                        <td>
-                            <strong>{{ employee.full_name }}</strong>
-                        </td>
+                        <td><strong>{{ employee.full_name }}</strong></td>
                         <td>{{ employee.username }}</td>
                         <td>{{ employee.email }}</td>
                         <td>
                             {% if employee.role == 'admin' %}
-                            <span class="badge bg-danger">مدير عام</span>
+                                <span class="badge bg-danger">مدير عام</span>
                             {% elif employee.role == 'manager' %}
-                            <span class="badge bg-warning">مدير</span>
+                                <span class="badge bg-warning">مدير</span>
                             {% else %}
-                            <span class="badge bg-primary">كاشير</span>
+                                <span class="badge bg-primary">كاشير</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if employee.is_active %}
-                            <span class="badge bg-success">مفعل</span>
+                                <span class="badge bg-success">مفعل</span>
                             {% else %}
-                            <span class="badge bg-secondary">غير مفعل</span>
+                                <span class="badge bg-secondary">غير مفعل</span>
                             {% endif %}
                         </td>
                         <td>{{ employee.created_at.strftime('%Y-%m-%d') }}</td>
                         <td>
                             <div class="btn-group" role="group">
+                                {% if current_user.has_permission('manage_employees') %}
                                 <button type="button" class="btn btn-sm btn-outline-primary" 
                                         data-bs-toggle="modal" data-bs-target="#editEmployeeModal{{ employee.id }}">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                {% if employee.id != current_user.id %}
-                                <button type="button" class="btn btn-sm btn-outline-warning" 
-                                        onclick="toggleEmployeeStatus({{ employee.id }})">
-                                    {% if employee.is_active %}
-                                    <i class="fas fa-user-slash"></i>
-                                    {% else %}
-                                    <i class="fas fa-user-check"></i>
-                                    {% endif %}
-                                </button>
                                 {% endif %}
+                                {% if employee.id != current_user.id and current_user.has_permission('manage_employees') %}
+<form method="POST" action="{{ url_for('delete_employee', employee_id=employee.id) }}" style="display:inline;" onsubmit="return confirm('هل أنت متأكد من حذف الموظف؟');">
+    <button type="submit" class="btn btn-sm btn-outline-danger">
+        <i class="fas fa-trash"></i>
+    </button>
+</form>
+{% endif %}
+
                             </div>
                         </td>
                     </tr>
@@ -93,41 +91,93 @@
     </div>
 </div>
 
+<!-- Edit Employee Modals (خارج الجدول) -->
+{% for employee in employees %}
+<div class="modal fade" id="editEmployeeModal{{ employee.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تعديل الموظف {{ employee.full_name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('edit_employee', employee_id=employee.id) }}">
+                <div class="modal-body overflow-auto" style="max-height: 80vh;">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">الاسم الكامل</label>
+                            <input type="text" name="full_name" class="form-control" value="{{ employee.full_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">اسم المستخدم</label>
+                            <input type="text" name="username" class="form-control" value="{{ employee.username }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            <input type="email" name="email" class="form-control" value="{{ employee.email }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الدور</label>
+                            <select name="role" class="form-select" required>
+                                <option value="cashier" {% if employee.role == 'cashier' %}selected{% endif %}>كاشير</option>
+                                <option value="manager" {% if employee.role == 'manager' %}selected{% endif %}>مدير</option>
+                                {% if current_user.role == 'admin' %}
+                                <option value="admin" {% if employee.role == 'admin' %}selected{% endif %}>مدير عام</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label">كلمة المرور (اتركها فارغة إذا لم يتم التغيير)</label>
+                            <input type="password" name="password" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">تحديث الموظف</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
 <!-- Add Employee Modal -->
 <div class="modal fade" id="addEmployeeModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">إضافة موظف جديد</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST" action="{{ url_for('employees') }}">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">الاسم الكامل</label>
-                        <input type="text" name="full_name" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">اسم المستخدم</label>
-                        <input type="text" name="username" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">البريد الإلكتروني</label>
-                        <input type="email" name="email" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">كلمة المرور</label>
-                        <input type="password" name="password" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">الدور</label>
-                        <select name="role" class="form-select" required>
-                            <option value="cashier">كاشير</option>
-                            <option value="manager">مدير</option>
-                            {% if current_user.role == 'admin' %}
-                            <option value="admin">مدير عام</option>
-                            {% endif %}
-                        </select>
+                <div class="modal-body overflow-auto" style="max-height: 80vh;">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">الاسم الكامل</label>
+                            <input type="text" name="full_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">اسم المستخدم</label>
+                            <input type="text" name="username" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">كلمة المرور</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الدور</label>
+                            <select name="role" class="form-select" required>
+                                <option value="cashier">كاشير</option>
+                                <option value="manager">مدير</option>
+                                {% if current_user.role == 'admin' %}
+                                <option value="admin">مدير عام</option>
+                                {% endif %}
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

@@ -129,7 +129,7 @@ function displaySearchResults(products) {
                                 <h6 class="card-title mb-1">${product.name}</h6>
                                 <p class="card-text small text-muted mb-1">${product.name_en || ''}</p>
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="h6 text-primary mb-0">${product.price.toFixed(2)} ر.س</span>
+                                    <span class="h6 text-primary mb-0">${product.price.toFixed(2)} جنيه</span>
                                     <span class="badge ${product.quantity > 0 ? 'bg-success' : 'bg-danger'}">
                                         ${product.quantity > 0 ? product.quantity + ' متوفر' : 'نفد المخزون'}
                                     </span>
@@ -278,7 +278,7 @@ function updateCartDisplay() {
                         </div>
                     </div>
                     <div class="col-6 text-end">
-                        <div class="fw-bold">${item.total.toFixed(2)} ر.س</div>
+                        <div class="fw-bold">${item.total.toFixed(2)} جنيه</div>
                         <small class="text-muted">${item.price.toFixed(2)} × ${item.quantity}</small>
                     </div>
                 </div>
@@ -294,10 +294,10 @@ function updateTotals() {
     const subtotal = cart.reduce((sum, item) => sum + item.total, 0);
     const discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
     const total = subtotal - discountAmount;
-    
-    document.getElementById('subtotal').textContent = subtotal.toFixed(2) + ' ر.س';
-    document.getElementById('discount').textContent = discountAmount.toFixed(2) + ' ر.س';
-    document.getElementById('total').textContent = Math.max(0, total).toFixed(2) + ' ر.س';
+
+    document.getElementById('subtotal').textContent = subtotal.toFixed(2) + ' جنيه';
+    document.getElementById('discount').textContent = discountAmount.toFixed(2) + ' جنيه';
+    document.getElementById('total').textContent = Math.max(0, total).toFixed(2) + ' جنيه';
 }
 
 function clearCart() {
@@ -399,7 +399,7 @@ function showSaleSummary(saleData) {
                     <div class="mb-4">
                         <i class="fas fa-receipt fa-4x text-success mb-3"></i>
                         <h4>فاتورة رقم: ${saleData.invoice_number}</h4>
-                        <h5 class="text-primary">${saleData.total_amount.toFixed(2)} ر.س</h5>
+                        <h5 class="text-primary">${saleData.total_amount.toFixed(2)} جنيه</h5>
                     </div>
                     <div class="d-grid gap-2">
                         <a href="/invoice/${saleData.sale_id}" target="_blank" class="btn btn-primary">

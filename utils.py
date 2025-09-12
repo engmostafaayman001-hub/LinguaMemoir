@@ -87,16 +87,16 @@ def create_invoice_pdf(sale):
         items_data.append([
             item.product.name_ar,
             str(item.quantity),
-            f"{item.unit_price:.2f} ر.س",
-            f"{item.total_price:.2f} ر.س"
+            f"{item.unit_price:.2f} جنية",
+            f"{item.total_price:.2f} جنية"
         ])
     
     # Add totals
-    items_data.append(['', '', 'المجموع الفرعي:', f"{sum(item.total_price for item in sale.items):.2f} ر.س"])
+    items_data.append(['', '', 'المجموع الفرعي:', f"{sum(item.total_price for item in sale.items):.2f} جنية"])
     if sale.discount_amount > 0:
-        items_data.append(['', '', 'الخصم:', f"-{sale.discount_amount:.2f} ر.س"])
-    items_data.append(['', '', 'الإجمالي النهائي:', f"{sale.total_amount:.2f} ر.س"])
-    
+        items_data.append(['', '', 'الخصم:', f"-{sale.discount_amount:.2f} جنية"])
+    items_data.append(['', '', 'الإجمالي النهائي:', f"{sale.total_amount:.2f} جنية"])
+
     items_table = Table(items_data, colWidths=[3*inch, 1*inch, 1.5*inch, 1.5*inch])
     items_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
