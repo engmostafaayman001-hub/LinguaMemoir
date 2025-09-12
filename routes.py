@@ -291,11 +291,35 @@ def inventory():
     if category_id:
         query = query.filter_by(category_id=category_id)
     
-    products = query.order_by(Product.name_ar).paginate(page=page, per_page=20, error_out=False)
+    products = query.order_by(Product.name_ar).paginate(
+        page=page, per_page=20, error_out=False
+    )
+    
     categories = Category.query.all()
     
-    return render_template('inventory.html', products=products, categories=categories,
-                           search=search, selected_category=category_id)
+    return render_template('inventory.html', 
+                         products=products, 
+                         categories=categories,
+                         search=search,
+                         selected_category=category_id)
+
+@app.route('/invoice/<int:sale_id>')
+@login_required
+def view_invoice(sale_id):
+    sale = Sale.query.get_or_404(sale_id)
+    return render_template('invoice.html', sale=sale)
+
+@app.route('/print_invoice/<int:sale_id>')
+@login_required
+def print_invoice(sale_id):
+    sale = Sale.query.get_or_404(sale_id)
+    # إذا أردت طباعة PDF استخدم الدالة create_invoice_pdf
+    pdf_path = create_invoice_pdf(sale)  # دالة توليد PDF موجودة في utils.py
+    return send_file(
+        pdf_path,
+        as_attachment=True,
+        download_name=f"invoice_{sale.invoice_number}.pdf"
+    )
 
 @app.route('/products')
 @login_required
