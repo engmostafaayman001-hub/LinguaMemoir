@@ -9,6 +9,8 @@ from utils import allowed_file, generate_invoice_number, create_invoice_pdf
 import os
 from datetime import datetime, timedelta
 from sqlalchemy import func, or_
+from flask_login import login_required, current_user
+
 
 @app.route('/')
 def index():
@@ -77,6 +79,45 @@ def dashboard():
                          low_stock_products=low_stock_products,
                          recent_sales=recent_sales,
                          total_products=total_products)
+
+@app.route('/logs')
+@login_required
+def logs():
+    # صلاحية الوصول (مثال: المشرف والمدير فقط)
+    if current_user.role not in ['admin', 'manager']:
+        flash('ليس لديك صلاحية للوصول لسجل الأنشطة', 'error')
+        return redirect(url_for('dashboard'))
+    
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '', type=str).strip()
+    movement_type = request.args.get('movement_type', '', type=str).strip()
+    
+    query = InventoryMovement.query.join(Product, isouter=True).join(Employee, isouter=True)
+
+    # فلترة البحث
+    if search:
+        query = query.filter(
+            db.or_(
+                Product.name_ar.ilike(f'%{search}%'),
+                Product.name.ilike(f'%{search}%'),
+                Employee.full_name.ilike(f'%{search}%')
+            )
+        )
+    
+    # فلترة نوع الحركة
+    if movement_type:
+        query = query.filter(InventoryMovement.movement_type == movement_type)
+    
+    # ترتيب حسب الأحدث أولاً
+    logs_paginated = query.order_by(InventoryMovement.created_at.desc()).paginate(page=page, per_page=20)
+
+    return render_template(
+        'logs.html',
+        logs=logs_paginated,
+        search=search,
+        selected_type=movement_type
+    )
+
 
 @app.route('/pos')
 @login_required
@@ -437,6 +478,41 @@ def edit_product(product_id):
             flash(f'حدث خطأ في تحديث المنتج: {str(e)}', 'error')
     
     return render_template('edit_product.html', form=form, product=product)
+
+from flask import redirect, url_for, flash
+from flask_login import login_required, current_user
+from app import app, db
+from models import Product, InventoryMovement, SaleItem
+
+@app.route('/delete_product/<int:product_id>', methods=['POST'])
+@login_required
+def delete_product(product_id):
+    # صلاحية الوصول
+    if not current_user.has_permission('manage_products'):
+        flash('ليس لديك صلاحية لحذف المنتجات', 'error')
+        return redirect(url_for('products'))
+
+    product = Product.query.get_or_404(product_id)
+
+    try:
+        # التحقق من وجود مبيعات مرتبطة بالمنتج
+        if product.sale_items:
+            flash('لا يمكن حذف المنتج لأنه مرتبط بمبيعات.', 'error')
+            return redirect(url_for('products'))
+        
+        # حذف جميع حركات المخزون المرتبطة بالمنتج
+        InventoryMovement.query.filter_by(product_id=product.id).delete()
+
+        # حذف المنتج
+        db.session.delete(product)
+        db.session.commit()
+
+        flash(f'تم حذف المنتج {product.name_ar} بنجاح', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'حدث خطأ أثناء حذف المنتج: {str(e)}', 'error')
+
+    return redirect(url_for('products'))
 
 @app.route('/sales_report')
 @login_required

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}سجل الأنشطة - نظام الكاشير{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h3 text-primary">
+            <i class="fas fa-clipboard-list me-2"></i>
+            سجل الأنشطة
+        </h1>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            العودة للرئيسية
+        </a>
+    </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">البحث</label>
+                <input type="text" name="search" class="form-control" 
+                       value="{{ search }}" placeholder="بحث بالمنتج، الموظف، أو النوع...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">نوع الحركة</label>
+                <select name="movement_type" class="form-select">
+                    <option value="">كل الأنواع</option>
+                    <option value="in" {% if selected_type == 'in' %}selected{% endif %}>إضافة مخزون</option>
+                    <option value="out" {% if selected_type == 'out' %}selected{% endif %}>صرف مخزون</option>
+                    <option value="adjustment" {% if selected_type == 'adjustment' %}selected{% endif %}>تعديل</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid gap-2 d-md-flex">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        بحث
+                    </button>
+                    <a href="{{ url_for('logs') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        مسح
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="card">
+    <div class="card-body">
+        {% if logs.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>الرقم</th>
+                        <th>المنتج / العنصر</th>
+                        <th>الموظف</th>
+                        <th>نوع الحركة</th>
+                        <th>الكمية</th>
+                        <th>الكمية السابقة</th>
+                        <th>الكمية الجديدة</th>
+                        <th>السبب</th>
+                        <th>التاريخ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs.items %}
+                    <tr>
+                        <td>{{ loop.index + (logs.page - 1) * logs.per_page }}</td>
+                        <td>{{ log.product.name_ar if log.product else '-' }}</td>
+                        <td>{{ log.employee.full_name if log.employee else '-' }}</td>
+                        <td>{{ log.movement_type|capitalize }}</td>
+                        <td>{{ log.quantity }}</td>
+                        <td>{{ log.previous_quantity }}</td>
+                        <td>{{ log.new_quantity }}</td>
+                        <td>{{ log.reason or '-' }}</td>
+                        <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if logs.pages > 1 %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% for page_num in logs.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != logs.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('logs', page=page_num, search=search, movement_type=selected_type) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+            <h5>لا توجد سجلات</h5>
+            <p class="text-muted">لم يتم العثور على أي حركة تطابق معايير البحث</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
