@@ -3,62 +3,91 @@
 {% block title %}تسجيل الدخول - نظام الكاشير{% endblock %}
 
 {% block content %}
+
+<style>
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: url("{{ url_for('static', filename='images/background-login.jpg') }}") no-repeat center center;
+    background-size: cover;
+}
+
+.login-card {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    width: 360px;
+    text-align: center;
+}
+
+.login-card img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 20px;
+}
+
+.login-card form {
+    text-align: left;
+    margin-top: 20px;
+}
+
+.login-card form .error {
+    color: red;
+    font-size: 12px;
+}
+
+.login-card button {
+    width: 100%;
+    padding: 10px;
+    background-color: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+}
+</style>
+
 <div class="login-container">
-    <div class="row justify-content-center">
-        <div class="col-md-4">
-            <div class="card shadow-lg">
-                <div class="card-body p-5">
-                    <div class="text-center mb-4">
-                        <i class="fas fa-cash-register fa-3x text-primary mb-3"></i>
-                        <h3 class="card-title">نظام الكاشير الاحترافي</h3>
-                        <p class="text-muted">يرجى تسجيل الدخول للمتابعة</p>
-                    </div>
-                    
-                    <form method="POST">
-                        {{ form.hidden_tag() }}
-                        
-                        <div class="mb-3">
-                            <label class="form-label">{{ form.username.label.text }}</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                {{ form.username(class="form-control") }}
-                            </div>
-                            {% for error in form.username.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label">{{ form.password.label.text }}</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                {{ form.password(class="form-control") }}
-                            </div>
-                            {% for error in form.password.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                        
-                        <div class="mb-3 form-check">
-                            {{ form.remember_me(class="form-check-input") }}
-                            <label class="form-check-label">{{ form.remember_me.label.text }}</label>
-                        </div>
-                        
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-sign-in-alt me-2"></i>
-                                تسجيل الدخول
-                            </button>
-                        </div>
-                    </form>
-                    
-                    <hr class="my-4">
-                    <div class="text-center text-muted small">
-                        <p>المدير الافتراضي: admin / admin123</p>
-                    </div>
-                </div>
+    <div class="login-card">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+        <h3>  أولاد أيمن للأدوات المنزلية</h3>
+        <p style="color: gray;">يرجى تسجيل الدخول للمتابعة</p>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+
+            <div style="margin-bottom: 15px;">
+                <label>{{ form.username.label.text }}</label>
+                <div>{{ form.username(class="form-control") }}</div>
+                {% for error in form.username.errors %}
+                    <div class="error">{{ error }}</div>
+                {% endfor %}
             </div>
-        </div>
+
+            <div style="margin-bottom: 15px;">
+                <label>{{ form.password.label.text }}</label>
+                <div>{{ form.password(class="form-control") }}</div>
+                {% for error in form.password.errors %}
+                    <div class="error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                {{ form.remember_me() }}
+                <label>{{ form.remember_me.label.text }}</label>
+            </div>
+
+            <button type="submit">تسجيل الدخول</button>
+        </form>
+
+        <hr style="margin: 30px 0;">
+        <p style="color: gray; font-size: 12px;">ماركود للبرمجيات و التسويق الرقمي</p>
     </div>
 </div>
+
 {% endblock %}

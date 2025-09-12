@@ -73,9 +73,3 @@ with app.app_context():
         db.session.commit()
         print("تم إنشاء حساب المدير الافتراضي")
 
-# ==========================
-# 6️⃣ إعداد اللوجين الرئيسي (اختياري لتشغيل السيرفر مباشرة)
-# ==========================
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    app.run(debug=True)

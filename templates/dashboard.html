@@ -139,7 +139,7 @@
                                 <small>{{ sale.created_at.strftime('%H:%M') if sale.created_at else 'غير محدد' }}</small>
                             </div>
                             <p class="mb-1">
-                                <strong>{{ "%.2f"|format(sale.total_amount) }} ر.س</strong>
+                                <strong>{{ "%.2f"|format(sale.total_amount) }} جنيه</strong>
                                 - {{ sale.customer_name or 'عميل عادي' }}
                             </p>
                             <small class="text-muted">{{ sale.employee.full_name }}</small>

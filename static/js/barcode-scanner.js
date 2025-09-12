@@ -212,7 +212,7 @@ function displayProductInfo(product) {
                             <table class="table table-sm">
                                 <tr><td><strong>الباركود:</strong></td><td>${product.barcode}</td></tr>
                                 <tr><td><strong>SKU:</strong></td><td>${product.sku}</td></tr>
-                                <tr><td><strong>السعر:</strong></td><td>${product.price.toFixed(2)} ر.س</td></tr>
+                                <tr><td><strong>السعر:</strong></td><td>${product.price.toFixed(2)} جنيه</td></tr>
                                 <tr><td><strong>الكمية المتوفرة:</strong></td><td>${product.quantity}</td></tr>
                             </table>
                         </div>

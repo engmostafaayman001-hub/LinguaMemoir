@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.formatCurrency = function(amount) {
         return new Intl.NumberFormat('ar-SA', {
             style: 'currency',
-            currency: 'SAR',
+            currency: 'EGP',
             minimumFractionDigits: 2
         }).format(amount);
     };
@@ -324,7 +324,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return value + ' ر.س';
+                                return value + ' جنيه';
                             }
                         }
                     }
@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-});
+});   
 
 // Service Worker registration for PWA capabilities
 if ('serviceWorker' in navigator) {

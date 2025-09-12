@@ -3,6 +3,8 @@
 {% block title %}سجل الأنشطة - نظام الكاشير{% endblock %}
 
 {% block content %}
+
+<!-- Header -->
 <div class="row mb-4">
     <div class="col">
         <h1 class="h3 text-primary">
@@ -37,8 +39,7 @@
                     <option value="delete" {% if selected_type == 'delete' %}selected{% endif %}>حذف</option>
                 </select>
             </div>
-            <div class="col-md-4">
-                <label class="form-label">&nbsp;</label>
+            <div class="col-md-4 d-flex align-items-end">
                 <div class="d-grid gap-2 d-md-flex">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search me-1"></i>
@@ -58,7 +59,7 @@
 <div class="card">
     <div class="card-body">
         {% if logs.items %}
-        <div class="table-responsive">
+        <div class="table-responsive" style="max-height:500px; overflow-y:auto;">
             <table class="table table-hover">
                 <thead class="table-dark">
                     <tr>
@@ -81,15 +82,15 @@
                         <td>{{ log.employee.full_name if log.employee else '-' }}</td>
                         <td>
                             {% if log.movement_type == 'in' %}
-                                إضافة
+                                <span class="badge bg-success">إضافة</span>
                             {% elif log.movement_type == 'out' %}
-                                بيع
+                                <span class="badge bg-warning">بيع</span>
                             {% elif log.movement_type == 'adjustment' %}
-                                تعديل
+                                <span class="badge bg-info">تعديل</span>
                             {% elif log.movement_type == 'delete' %}
-                                حذف
+                                <span class="badge bg-danger">حذف</span>
                             {% else %}
-                                {{ log.movement_type }}
+                                <span class="badge bg-secondary">{{ log.movement_type }}</span>
                             {% endif %}
                         </td>
                         <td>{{ log.quantity }}</td>
@@ -143,12 +144,15 @@
         {% endif %}
 
         {% else %}
-        <div class="text-center py-5">
-            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
-            <h5>لا توجد سجلات</h5>
-            <p class="text-muted">لم يتم العثور على أي حركة تطابق معايير البحث</p>
+        <div class="d-flex justify-content-center align-items-center" style="min-height:400px;">
+            <div class="text-center">
+                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                <h5>لا توجد سجلات</h5>
+                <p class="text-muted">لم يتم العثور على أي حركة تطابق معايير البحث</p>
+            </div>
         </div>
         {% endif %}
     </div>
 </div>
+
 {% endblock %}

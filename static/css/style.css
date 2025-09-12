@@ -253,33 +253,58 @@ body {
 }
 
 /* Login Page Styles */
+/* حاوية تسجيل الدخول */
 .login-container {
-    min-height: 100vh;
     display: flex;
+    justify-content: center;
     align-items: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    position: relative;
-    overflow: hidden;
+    min-height: 100vh;
+    background: url('/static/images/background-login.jpg') no-repeat center center;
+    background-size: cover;
 }
-
-.login-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-    opacity: 0.3;
-}
-
-.login-container .card {
+.login-card {
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    position: relative;
-    z-index: 1;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    width: 360px;
+    text-align: center;
 }
+
+
+.login-container .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+}
+
+/* اللوجو */
+.card-logo {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 20px auto;  /* مسافة أسفل اللوجو */
+    display: block;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #007bff;
+}
+
+/* عنوان البطاقة */
+.card-title {
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+
+/* النصوص التوضيحية */
+.card p {
+    color: #555;
+}
+
+.table-responsive {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+
 
 /* Dashboard Statistics Cards */
 .card.bg-primary,
