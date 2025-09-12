@@ -17,6 +17,7 @@ class Employee(UserMixin, db.Model):
 
     # العلاقات
     sales = db.relationship('Sale', backref='employee', lazy=True)
+    inventory_movements = db.relationship('InventoryMovement', backref='employee', lazy=True)
 
     def has_permission(self, permission):
         permissions = {
@@ -58,9 +59,7 @@ class Product(db.Model):
     image_url = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Foreign Key
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
@@ -120,11 +119,15 @@ class SaleItem(db.Model):
 # ==========================
 class InventoryMovement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    movement_type = db.Column(db.String(20), nullable=False)  # in, out, adjustment
+    
+    # أنواع الحركة: in, out, adjustment, update, deleted
+    movement_type = db.Column(db.String(20), nullable=False)
+    
     quantity = db.Column(db.Integer, nullable=False)
     previous_quantity = db.Column(db.Integer, nullable=False)
     new_quantity = db.Column(db.Integer, nullable=False)
-    reason = db.Column(db.String(100))
+    
+    reason = db.Column(db.String(255))
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

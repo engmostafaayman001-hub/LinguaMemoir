@@ -329,6 +329,7 @@ def products():
     return render_template('products.html', products=products, categories=categories,
                            search=search, selected_category=category_id)
 
+
 # =========================
 # إضافة وتعديل وحذف المنتجات مع سجل كامل
 # =========================
@@ -370,7 +371,7 @@ def add_product():
             cost_price=form.cost_price.data,
             quantity=form.quantity.data,
             min_quantity=form.min_quantity.data,
-            is_active=True if form.is_active.data == '1' else False,  
+            is_active=True if form.is_active.data == '1' else False,
             category_id=category.id,
             image_url=image_url
         )
@@ -379,7 +380,7 @@ def add_product():
             db.session.add(product)
             db.session.commit()
             
-            # سجل إضافة المنتج
+            # سجل إضافة المنتج في InventoryMovement
             movement = InventoryMovement(
                 movement_type='in',
                 quantity=product.quantity,
@@ -399,6 +400,7 @@ def add_product():
             flash(f'حدث خطأ في إضافة المنتج: {str(e)}', 'error')
     
     return render_template('add_product.html', form=form)
+
 
 @app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 @login_required
@@ -520,6 +522,7 @@ def edit_product(product_id):
     
     return render_template('edit_product.html', form=form, product=product)
 
+
 @app.route('/delete_product/<int:product_id>', methods=['POST'])
 @login_required
 def delete_product(product_id):
@@ -534,7 +537,7 @@ def delete_product(product_id):
             flash('لا يمكن حذف المنتج لأنه مرتبط بمبيعات.', 'error')
             return redirect(url_for('products'))
         
-        # سجل عملية الحذف قبل الحذف
+        # سجل عملية الحذف في InventoryMovement قبل الحذف
         movement = InventoryMovement(
             movement_type='deleted',
             quantity=product.quantity,
@@ -555,6 +558,7 @@ def delete_product(product_id):
         flash(f'حدث خطأ أثناء حذف المنتج: {str(e)}', 'error')
     
     return redirect(url_for('products'))
+
 
 # =========================
 # تقارير المبيعات

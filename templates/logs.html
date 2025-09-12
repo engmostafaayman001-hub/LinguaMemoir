@@ -36,7 +36,8 @@
                     <option value="in" {% if selected_type == 'in' %}selected{% endif %}>إضافة</option>
                     <option value="out" {% if selected_type == 'out' %}selected{% endif %}>بيع</option>
                     <option value="adjustment" {% if selected_type == 'adjustment' %}selected{% endif %}>تعديل</option>
-                    <option value="delete" {% if selected_type == 'delete' %}selected{% endif %}>حذف</option>
+                    <option value="deleted" {% if selected_type == 'deleted' %}selected{% endif %}>حذف</option>
+                    <option value="update" {% if selected_type == 'update' %}selected{% endif %}>تحديث</option>
                 </select>
             </div>
             <div class="col-md-4 d-flex align-items-end">
@@ -87,10 +88,12 @@
                                 <span class="badge bg-warning">بيع</span>
                             {% elif log.movement_type == 'adjustment' %}
                                 <span class="badge bg-info">تعديل</span>
-                            {% elif log.movement_type == 'delete' %}
+                            {% elif log.movement_type == 'deleted' %}
                                 <span class="badge bg-danger">حذف</span>
+                            {% elif log.movement_type == 'update' %}
+                                <span class="badge bg-secondary">تحديث</span>
                             {% else %}
-                                <span class="badge bg-secondary">{{ log.movement_type }}</span>
+                                <span class="badge bg-dark">{{ log.movement_type }}</span>
                             {% endif %}
                         </td>
                         <td>{{ log.quantity }}</td>
@@ -103,8 +106,10 @@
                                 باع الموظف {{ log.employee.full_name if log.employee else '-' }} العنصر {{ log.product.name_ar if log.product else '-' }}
                             {% elif log.movement_type == 'adjustment' %}
                                 عدل الموظف {{ log.employee.full_name if log.employee else '-' }} العنصر {{ log.product.name_ar if log.product else '-' }}
-                            {% elif log.movement_type == 'delete' %}
+                            {% elif log.movement_type == 'deleted' %}
                                 حذف الموظف {{ log.employee.full_name if log.employee else '-' }} العنصر {{ log.product.name_ar if log.product else '-' }}
+                            {% elif log.movement_type == 'update' %}
+                                {{ log.reason or '-' }}
                             {% else %}
                                 {{ log.reason or '-' }}
                             {% endif %}

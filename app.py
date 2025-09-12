@@ -36,7 +36,7 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 # 3️⃣ تهيئة SQLAlchemy و Migrate و LoginManager
 # ==========================
 db = SQLAlchemy(app, model_class=Base)
-migrate = Migrate(app, db)  # ⚡ هنا بعد تعريف app و db
+migrate = Migrate(app, db)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -54,22 +54,33 @@ def load_user(user_id):
 from routes import *
 
 # ==========================
-# 5️⃣ إنشاء الجداول وحساب المدير الافتراضي
+# 5️⃣ إنشاء الجداول وحساب المدير الافتراضي أو تعديل بياناته
 # ==========================
 with app.app_context():
     import models
     db.create_all()
 
     from models import Employee
-    if not Employee.query.filter_by(username='admin').first():
+    admin = Employee.query.filter_by(username='admin').first()
+    
+    if not admin:
+        # إنشاء المدير إذا لم يكن موجودًا
         admin = Employee(
             username='admin',
             email='admin@pos.com',
             full_name='المدير العام',
             role='admin',
+            is_active=True,
             password_hash=generate_password_hash('Markode123@@@')
         )
         db.session.add(admin)
         db.session.commit()
         print("تم إنشاء حساب المدير الافتراضي")
-
+    else:
+        # السماح بتعديل بيانات المدير الموجود بالفعل إذا رغبت
+        admin.email = 'admin@pos.com'
+        admin.full_name = 'المدير العام'
+        admin.role = 'admin'
+        admin.is_active = True
+        db.session.commit()
+        print("تم تحديث بيانات المدير الافتراضي إذا كانت تحتاج تعديل")
