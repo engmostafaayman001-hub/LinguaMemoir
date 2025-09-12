@@ -5,15 +5,21 @@
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.4/minified/html5-qrcode.min.js"></script>
 <style>
-  /* تعديل حجم ماسح الباركود */
   #qr-reader {
       width: 100% !important;
-      height: 80vh; /* يغطي 80% من ارتفاع الشاشة */
+      height: 60vh;
       max-width: 700px;
       margin: 0 auto;
   }
   #barcodeModal .modal-body {
       padding: 0;
+  }
+  .scanner-options {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
   }
 </style>
 {% endblock %}
@@ -36,23 +42,22 @@
                 <div class="row g-2">
                     <div class="col-md-6">
                         <div class="input-group">
-                            <input type="text" id="productSearch" class="form-control" 
-                                   placeholder="البحث بالاسم أو الباركود...">
+                            <input type="text" id="productSearch" class="form-control" placeholder="البحث بالاسم أو الباركود...">
                             <button class="btn btn-primary" type="button" onclick="searchProducts()">
                                 <i class="fas fa-search"></i>
                             </button>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <button class="btn btn-dark w-100" onclick="useBarcodeDevice()">
+                        <button class="btn btn-dark w-100" onclick="document.getElementById('productSearch').focus()">
                             <i class="fas fa-keyboard me-1"></i>
                             جهاز الباركود
                         </button>
                     </div>
                     <div class="col-md-3">
-                        <button class="btn btn-success w-100" onclick="startBarcodeScanner()">
+                        <button class="btn btn-success w-100" onclick="openBarcodeModal()">
                             <i class="fas fa-camera me-1"></i>
-                            كاميرا الهاتف
+                            ماسح الباركود
                         </button>
                     </div>
                 </div>
@@ -81,17 +86,14 @@
                         <p>السلة فارغة</p>
                     </div>
                 </div>
-                
                 <div class="mb-3">
                     <label class="form-label">اسم العميل (اختياري)</label>
                     <input type="text" id="customerName" class="form-control" placeholder="اسم العميل">
                 </div>
-                
                 <div class="mb-3">
                     <label class="form-label">رقم الهاتف (اختياري)</label>
                     <input type="text" id="customerPhone" class="form-control" placeholder="رقم الهاتف">
                 </div>
-                
                 <div class="mb-3">
                     <label class="form-label">خصم</label>
                     <div class="input-group">
@@ -99,7 +101,6 @@
                         <span class="input-group-text">جنيه</span>
                     </div>
                 </div>
-                
                 <div class="mb-3">
                     <label class="form-label">طريقة الدفع</label>
                     <select id="paymentMethod" class="form-select">
@@ -108,7 +109,6 @@
                         <option value="mixed">مختلط</option>
                     </select>
                 </div>
-                
                 <div class="border-top pt-3">
                     <div class="d-flex justify-content-between mb-2">
                         <span>المجموع الفرعي:</span>
@@ -123,7 +123,6 @@
                         <strong id="total">0.00 جنيه</strong>
                     </div>
                 </div>
-                
                 <div class="d-grid gap-2 mt-3">
                     <button class="btn btn-success btn-lg" onclick="processSale()" disabled id="checkoutBtn">
                         <i class="fas fa-credit-card me-1"></i>
@@ -139,19 +138,27 @@
     </div>
 </div>
 
-<!-- 🔹 مودال ماسح الباركود -->
+<!-- Barcode Scanner Modal -->
 <div class="modal fade" id="barcodeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">مسح الباركود عبر الكاميرا</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title">مسح الباركود</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="stopScanner()"></button>
             </div>
             <div class="modal-body">
+                <div class="scanner-options">
+                    <button class="btn btn-success me-1" onclick="startCamera('environment')">كاميرا خلفية</button>
+                    <button class="btn btn-secondary me-1" onclick="startCamera('user')">كاميرا أمامية</button>
+                    <label class="btn btn-primary mb-0">
+                        رفع ملف
+                        <input type="file" accept="image/*" style="display:none" onchange="scanFile(this)">
+                    </label>
+                </div>
                 <div id="qr-reader"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="stopScanner()">إغلاق</button>
             </div>
         </div>
     </div>
@@ -161,40 +168,57 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/barcode-scanner.js') }}"></script>
 <script src="{{ url_for('static', filename='js/pos.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.4/minified/html5-qrcode.min.js"></script>
 
 <script>
 let html5QrCode;
 
-function useBarcodeDevice() {
-    document.getElementById("productSearch").focus();
+function openBarcodeModal() {
+    const modal = new bootstrap.Modal(document.getElementById('barcodeModal'));
+    modal.show();
 }
 
-function startBarcodeScanner() {
-    const modalEl = document.getElementById('barcodeModal');
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
-
+function startCamera(facingMode) {
+    if(html5QrCode){
+        html5QrCode.stop().catch(()=>{});
+    }
     html5QrCode = new Html5Qrcode("qr-reader");
-    Html5Qrcode.getCameras().then(cameras => {
-        if (cameras && cameras.length) {
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: 250 },
-                (decodedText) => {
-                    document.getElementById("productSearch").value = decodedText;
-                    modal.hide();
-                    html5QrCode.stop().catch(err => console.error(err));
-                    searchProducts();
-                }
-            );
-        }
-    }).catch(err => console.error(err));
 
-    modalEl.addEventListener('hidden.bs.modal', () => {
-        if (html5QrCode) {
-            html5QrCode.stop().catch(err => console.error(err));
-        }
+    html5QrCode.start(
+        { facingMode: facingMode },
+        { fps: 10, qrbox: 250 },
+        decodedText => {
+            document.getElementById("productSearch").value = decodedText;
+            searchProducts();
+            stopScanner();
+        },
+        errorMessage => {}
+    ).catch(err=>{
+        alert("تعذر الوصول إلى الكاميرا: " + err);
     });
+}
+
+function scanFile(input) {
+    if(!input.files || !input.files[0]) return;
+    if(html5QrCode){
+        html5QrCode.stop().catch(()=>{});
+    }
+    html5QrCode = new Html5Qrcode("qr-reader");
+    html5QrCode.scanFile(input.files[0], true)
+        .then(decodedText=>{
+            document.getElementById("productSearch").value = decodedText;
+            searchProducts();
+            stopScanner();
+        })
+        .catch(err=>console.error(err));
+}
+
+function stopScanner(){
+    if(html5QrCode){
+        html5QrCode.stop().catch(()=>{});
+    }
+    const modalEl = document.getElementById('barcodeModal');
+    bootstrap.Modal.getInstance(modalEl)?.hide();
 }
 </script>
 {% endblock %}
