@@ -97,7 +97,7 @@
                         <td>{{ product.barcode or '-' }}</td>
                         <td>{{ product.category.name_ar if product.category else '-' }}</td>
                         <td>
-                            <strong>{{ "%.2f"|format(product.price) }} ر.س</strong>
+                            <strong>{{ "%.2f"|format(product.price) }} جنية </strong>
                             {% if product.cost_price %}
                             <br>
                             <small class="text-muted">التكلفة: {{ "%.2f"|format(product.cost_price) }} جنية</small>

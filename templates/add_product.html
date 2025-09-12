@@ -45,7 +45,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         {{ form.description.label(class="form-label") }}
                         {{ form.description(class="form-control", rows="3") }}
@@ -53,7 +53,7 @@
                             <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -68,7 +68,7 @@
                             <div class="mb-3">
                                 {{ form.barcode.label(class="form-label") }}
                                 <div class="input-group">
-                                    {{ form.barcode(class="form-control") }}
+                                    {{ form.barcode(class="form-control", id="barcode") }}
                                     <button type="button" class="btn btn-outline-secondary" onclick="generateBarcode()">
                                         <i class="fas fa-magic"></i>
                                     </button>
@@ -79,15 +79,16 @@
                             </div>
                         </div>
                     </div>
-                    
+
+                    <!-- حقل الفئة كنص -->
                     <div class="mb-3">
-                        {{ form.category_id.label(class="form-label") }}
-                        {{ form.category_id(class="form-select") }}
-                        {% for error in form.category_id.errors %}
+                        {{ form.category_name.label(class="form-label") }}
+                        {{ form.category_name(class="form-control", placeholder="اكتب اسم الفئة أو اختر فئة موجودة") }}
+                        {% for error in form.category_name.errors %}
                             <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -115,7 +116,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -137,7 +138,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         {{ form.image.label(class="form-label") }}
                         {{ form.image(class="form-control") }}
@@ -146,7 +147,7 @@
                         {% endfor %}
                         <div class="form-text">اختر صورة للمنتج (JPG, PNG)</div>
                     </div>
-                    
+
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a href="{{ url_for('products') }}" class="btn btn-secondary me-md-2">إلغاء</a>
                         <button type="submit" class="btn btn-success">
@@ -164,7 +165,6 @@
 {% block scripts %}
 <script>
 function generateBarcode() {
-    // Generate a simple barcode based on timestamp
     const timestamp = Date.now().toString();
     const randomSuffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     const barcode = timestamp.slice(-8) + randomSuffix;

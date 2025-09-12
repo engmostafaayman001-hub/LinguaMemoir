@@ -298,7 +298,6 @@ def products():
                          categories=categories,
                          search=search,
                          selected_category=category_id)
-
 @app.route('/add_product', methods=['GET', 'POST'])
 @login_required
 def add_product():
@@ -307,16 +306,25 @@ def add_product():
         return redirect(url_for('dashboard'))
     
     form = ProductForm()
-    form.category_id.choices = [(c.id, c.name_ar) for c in Category.query.all()]
     
     if form.validate_on_submit():
+        # تحقق أو إنشاء الفئة
+        category_name = form.category_name.data.strip()
+        category = Category.query.filter_by(name_ar=category_name).first()
+        if not category:
+            category = Category(
+                name=category_name,       # ملء الحقل name الإلزامي
+                name_ar=category_name
+            )
+            db.session.add(category)
+            db.session.commit()
+
         # Handle file upload
         image_url = None
         if form.image.data:
             file = form.image.data
             if allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                # Add timestamp to avoid conflicts
                 filename = f"{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{filename}"
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -333,7 +341,7 @@ def add_product():
             cost_price=form.cost_price.data,
             quantity=form.quantity.data,
             min_quantity=form.min_quantity.data,
-            category_id=form.category_id.data,
+            category_id=category.id,
             image_url=image_url
         )
         
@@ -341,7 +349,7 @@ def add_product():
             db.session.add(product)
             db.session.commit()
             
-            # Create inventory movement record
+            # سجل حركة المخزون
             movement = InventoryMovement(
                 movement_type='in',
                 quantity=product.quantity,
@@ -360,8 +368,8 @@ def add_product():
             db.session.rollback()
             flash(f'حدث خطأ في إضافة المنتج: {str(e)}', 'error')
     
-    categories = Category.query.all()
-    return render_template('add_product.html', form=form, categories=categories)
+    return render_template('add_product.html', form=form)
+
 
 @app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 @login_required
@@ -372,11 +380,22 @@ def edit_product(product_id):
     
     product = Product.query.get_or_404(product_id)
     form = ProductForm(obj=product)
-    form.category_id.choices = [(c.id, c.name_ar) for c in Category.query.all()]
     
     if form.validate_on_submit():
         old_quantity = product.quantity
-        
+
+        # تحقق أو إنشاء الفئة
+        category_name = form.category_name.data.strip()
+        category = Category.query.filter_by(name_ar=category_name).first()
+        if not category:
+            category = Category(
+                name=category_name,       # ملء الحقل name الإلزامي
+                name_ar=category_name
+            )
+            db.session.add(category)
+            db.session.commit()
+        product.category_id = category.id
+
         # Handle file upload
         if form.image.data:
             file = form.image.data
@@ -394,7 +413,7 @@ def edit_product(product_id):
         try:
             db.session.commit()
             
-            # Create inventory movement if quantity changed
+            # سجل حركة المخزون إذا تغيرت الكمية
             if old_quantity != product.quantity:
                 movement_type = 'in' if product.quantity > old_quantity else 'adjustment'
                 quantity_diff = abs(product.quantity - old_quantity)
@@ -417,8 +436,7 @@ def edit_product(product_id):
             db.session.rollback()
             flash(f'حدث خطأ في تحديث المنتج: {str(e)}', 'error')
     
-    categories = Category.query.all()
-    return render_template('edit_product.html', form=form, product=product, categories=categories)
+    return render_template('edit_product.html', form=form, product=product)
 
 @app.route('/sales_report')
 @login_required

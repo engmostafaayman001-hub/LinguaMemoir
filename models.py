@@ -1,8 +1,10 @@
 from app import db
 from flask_login import UserMixin
 from datetime import datetime
-from sqlalchemy import func
 
+# ==========================
+# نموذج الموظف
+# ==========================
 class Employee(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
@@ -12,10 +14,10 @@ class Employee(UserMixin, db.Model):
     role = db.Column(db.String(20), nullable=False, default='cashier')  # admin, manager, cashier
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
+
+    # العلاقات
     sales = db.relationship('Sale', backref='employee', lazy=True)
-    
+
     def has_permission(self, permission):
         permissions = {
             'admin': ['manage_employees', 'manage_inventory', 'view_reports', 'make_sales', 'manage_products'],
@@ -24,16 +26,22 @@ class Employee(UserMixin, db.Model):
         }
         return permission in permissions.get(self.role, [])
 
+# ==========================
+# نموذج الفئة
+# ==========================
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     name_ar = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
+
+    # العلاقات
     products = db.relationship('Product', backref='category', lazy=True)
 
+# ==========================
+# نموذج المنتج
+# ==========================
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200), nullable=False)
@@ -44,52 +52,61 @@ class Product(db.Model):
     price = db.Column(db.Numeric(10, 2), nullable=False)
     cost_price = db.Column(db.Numeric(10, 2))
     quantity = db.Column(db.Integer, nullable=False, default=0)
-    min_quantity = db.Column(db.Integer, default=5)  # Alert when stock is low
+    min_quantity = db.Column(db.Integer, default=5)
     image_url = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Foreign Keys
+
+    # Foreign Key
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    
-    # Relationships
+
+    # العلاقات
     sale_items = db.relationship('SaleItem', backref='product', lazy=True)
     inventory_movements = db.relationship('InventoryMovement', backref='product', lazy=True)
-    
+
     @property
     def is_low_stock(self):
         return self.quantity <= self.min_quantity
 
+# ==========================
+# نموذج البيع
+# ==========================
 class Sale(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     invoice_number = db.Column(db.String(20), unique=True, nullable=False)
     total_amount = db.Column(db.Numeric(10, 2), nullable=False)
     tax_amount = db.Column(db.Numeric(10, 2), default=0)
     discount_amount = db.Column(db.Numeric(10, 2), default=0)
-    payment_method = db.Column(db.String(20), default='cash')  # cash, card, mixed
+    payment_method = db.Column(db.String(20), default='cash')
     customer_name = db.Column(db.String(100))
     customer_phone = db.Column(db.String(20))
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Foreign Keys
+
+    # Foreign Key
     employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=False)
-    
-    # Relationships
+
+    # العلاقات
     items = db.relationship('SaleItem', backref='sale', lazy=True, cascade='all, delete-orphan')
 
+# ==========================
+# عناصر البيع
+# ==========================
 class SaleItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer, nullable=False)
     unit_price = db.Column(db.Numeric(10, 2), nullable=False)
     total_price = db.Column(db.Numeric(10, 2), nullable=False)
     discount_amount = db.Column(db.Numeric(10, 2), default=0)
-    
+
     # Foreign Keys
     sale_id = db.Column(db.Integer, db.ForeignKey('sale.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
 
+# ==========================
+# حركة المخزون
+# ==========================
 class InventoryMovement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     movement_type = db.Column(db.String(20), nullable=False)  # in, out, adjustment
@@ -99,7 +116,7 @@ class InventoryMovement(db.Model):
     reason = db.Column(db.String(100))
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Foreign Keys
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=False)

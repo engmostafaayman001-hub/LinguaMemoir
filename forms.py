@@ -2,6 +2,8 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, TextAreaField, DecimalField, IntegerField, SelectField, BooleanField, PasswordField
 from wtforms.validators import DataRequired, Email, NumberRange, Optional, Length
+from wtforms import StringField
+from wtforms.validators import DataRequired
 
 class LoginForm(FlaskForm):
     username = StringField('اسم المستخدم', validators=[DataRequired(message='اسم المستخدم مطلوب')])
@@ -18,7 +20,7 @@ class ProductForm(FlaskForm):
     cost_price = DecimalField('سعر التكلفة', validators=[Optional(), NumberRange(min=0, message='سعر التكلفة يجب أن يكون أكبر من أو يساوي صفر')])
     quantity = IntegerField('الكمية', validators=[DataRequired(message='الكمية مطلوبة'), NumberRange(min=0, message='الكمية يجب أن تكون أكبر من أو تساوي صفر')])
     min_quantity = IntegerField('الحد الأدنى للكمية', validators=[DataRequired(message='الحد الأدنى للكمية مطلوب'), NumberRange(min=0, message='الحد الأدنى يجب أن يكون أكبر من أو يساوي صفر')])
-    category_id = SelectField('الفئة', coerce=int, validators=[DataRequired(message='الفئة مطلوبة')])
+    category_name = StringField('الفئة', validators=[DataRequired(message='الفئة مطلوبة')])
     image = FileField('صورة المنتج', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'يجب أن تكون الصورة من نوع JPG أو PNG')])
 
 class EmployeeForm(FlaskForm):

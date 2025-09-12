@@ -25,7 +25,6 @@
                 <form method="POST" enctype="multipart/form-data">
                     {{ form.hidden_tag() }}
                     
-                    <!-- Current Image Display -->
                     {% if product.image_url %}
                     <div class="mb-3 text-center">
                         <label class="form-label">الصورة الحالية</label>
@@ -78,7 +77,7 @@
                             <div class="mb-3">
                                 {{ form.barcode.label(class="form-label") }}
                                 <div class="input-group">
-                                    {{ form.barcode(class="form-control") }}
+                                    {{ form.barcode(class="form-control", id="barcode") }}
                                     <button type="button" class="btn btn-outline-secondary" onclick="generateBarcode()">
                                         <i class="fas fa-magic"></i>
                                     </button>
@@ -90,10 +89,11 @@
                         </div>
                     </div>
                     
+                    <!-- حقل الفئة كنص -->
                     <div class="mb-3">
-                        {{ form.category_id.label(class="form-label") }}
-                        {{ form.category_id(class="form-select") }}
-                        {% for error in form.category_id.errors %}
+                        {{ form.category_name.label(class="form-label") }}
+                        {{ form.category_name(class="form-control", placeholder="اكتب اسم الفئة أو اختر فئة موجودة") }}
+                        {% for error in form.category_name.errors %}
                             <div class="text-danger small">{{ error }}</div>
                         {% endfor %}
                     </div>
@@ -116,7 +116,7 @@
                                 {{ form.cost_price.label(class="form-label") }}
                                 <div class="input-group">
                                     {{ form.cost_price(class="form-control") }}
-                                    <span class="input-group-text">ر.س</span>
+                                    <span class="input-group-text">جنية</span>
                                 </div>
                                 {% for error in form.cost_price.errors %}
                                     <div class="text-danger small">{{ error }}</div>
@@ -175,7 +175,6 @@
 {% block scripts %}
 <script>
 function generateBarcode() {
-    // Generate a simple barcode based on timestamp
     const timestamp = Date.now().toString();
     const randomSuffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     const barcode = timestamp.slice(-8) + randomSuffix;
