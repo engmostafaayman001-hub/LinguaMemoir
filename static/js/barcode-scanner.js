@@ -7,37 +7,39 @@ let scannerStarted = false;
 function startBarcodeScanner() {
     const modal = new bootstrap.Modal(document.getElementById('barcodeModal'));
     modal.show();
-    
+
+    const modalElement = document.getElementById('barcodeModal');
+
     // Start scanner when modal is fully shown
-    document.getElementById('barcodeModal').addEventListener('shown.bs.modal', function () {
+    modalElement.addEventListener('shown.bs.modal', function onShown() {
         if (!scannerStarted) {
             initializeScanner();
         }
+        modalElement.removeEventListener('shown.bs.modal', onShown);
     });
-    
+
     // Stop scanner when modal is hidden
-    document.getElementById('barcodeModal').addEventListener('hidden.bs.modal', function () {
+    modalElement.addEventListener('hidden.bs.modal', function onHidden() {
         stopScanner();
+        modalElement.removeEventListener('hidden.bs.modal', onHidden);
     });
 }
 
 function initializeScanner() {
     const qrCodeReader = document.getElementById('qr-reader');
-    
+
     if (!qrCodeReader) {
         console.error('QR reader element not found');
         return;
     }
 
     html5QrCode = new Html5Qrcode("qr-reader");
-    
+
     const config = {
         fps: 10,
         qrbox: { width: 250, height: 250 },
         aspectRatio: 1.0,
-        supportedScanTypes: [
-            Html5QrcodeScanType.SCAN_TYPE_CAMERA
-        ]
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
     };
 
     // Start scanning
@@ -52,8 +54,6 @@ function initializeScanner() {
     }).catch(err => {
         console.error('Failed to start barcode scanner:', err);
         showScannerError('فشل في بدء تشغيل الماسح الضوئي. تأكد من منح الإذن للكاميرا.');
-        
-        // Fallback to manual input
         showManualBarcodeInput();
     });
 }
@@ -71,51 +71,49 @@ function stopScanner() {
 
 function onScanSuccess(decodedText, decodedResult) {
     console.log('Barcode scanned:', decodedText);
-    
+
     // Stop the scanner
     stopScanner();
-    
+
     // Close the modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('barcodeModal'));
-    modal.hide();
-    
+    if (modal) modal.hide();
+
     // Process the scanned barcode
     processScannedBarcode(decodedText);
 }
 
 function onScanFailure(error) {
-    // This is called when scanning fails, but we don't need to handle every failure
-    // as it's normal for scanning to fail until a valid barcode is detected
     console.debug('Scan failure:', error);
 }
 
 function processScannedBarcode(barcode) {
-    // Show loading indicator
+    console.log("Processing barcode:", barcode);
+
+    // Fill the search input if exists
+    const searchInput = document.getElementById('productSearch');
+    if (searchInput) {
+        searchInput.value = barcode;
+        if (typeof searchProducts === "function") {
+            searchProducts();
+        }
+    }
+
+    // Show loading
     showToast('جاري البحث عن المنتج...', 'info');
-    
+
     // Search for product by barcode
     fetch(`/api/get_product_by_barcode/${encodeURIComponent(barcode)}`)
         .then(response => response.json())
         .then(data => {
             if (data.error) {
                 showToast('المنتج غير موجود: ' + barcode, 'warning');
-                
-                // If we're on the POS page, offer to add to search
-                if (window.location.pathname.includes('pos')) {
-                    const searchInput = document.getElementById('productSearch');
-                    if (searchInput) {
-                        searchInput.value = barcode;
-                        searchProducts();
-                    }
-                }
             } else {
                 showToast(`تم العثور على المنتج: ${data.name}`, 'success');
-                
-                // If we're on POS page, add to cart
+
                 if (window.location.pathname.includes('pos') && typeof addToCart === 'function') {
                     addToCart(data);
                 } else {
-                    // Otherwise, show product details
                     displayProductInfo(data);
                 }
             }
@@ -155,13 +153,11 @@ function showManualBarcodeInput() {
             </div>
         </div>
     `;
-    
-    // Focus on input
+
     setTimeout(() => {
         document.getElementById('manualBarcode').focus();
     }, 100);
-    
-    // Handle Enter key
+
     document.getElementById('manualBarcode').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             processManualBarcode();
@@ -172,13 +168,10 @@ function showManualBarcodeInput() {
 function processManualBarcode() {
     const barcodeInput = document.getElementById('manualBarcode');
     const barcode = barcodeInput.value.trim();
-    
+
     if (barcode) {
-        // Close the modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('barcodeModal'));
-        modal.hide();
-        
-        // Process the barcode
+        if (modal) modal.hide();
         processScannedBarcode(barcode);
     } else {
         showToast('يرجى إدخال رقم الباركود', 'warning');
@@ -187,7 +180,6 @@ function processManualBarcode() {
 }
 
 function displayProductInfo(product) {
-    // Create a modal to display product information
     const productModal = document.createElement('div');
     productModal.className = 'modal fade';
     productModal.id = 'productInfoModal';
@@ -224,49 +216,41 @@ function displayProductInfo(product) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(productModal);
     const modal = new bootstrap.Modal(productModal);
     modal.show();
-    
-    // Remove modal from DOM when hidden
+
     productModal.addEventListener('hidden.bs.modal', function() {
         productModal.remove();
     });
 }
 
-// Enhanced barcode detection for keyboard input
+// Enhanced barcode detection for hardware scanners (keyboard emulation)
 document.addEventListener('DOMContentLoaded', function() {
     let barcodeBuffer = '';
     let lastKeyTime = Date.now();
-    
+
     document.addEventListener('keypress', function(e) {
         const currentTime = Date.now();
-        
-        // If more than 100ms since last key, start new barcode
+
         if (currentTime - lastKeyTime > 100) {
             barcodeBuffer = '';
         }
-        
         lastKeyTime = currentTime;
-        
-        // Add character to buffer
+
         barcodeBuffer += e.key;
-        
-        // If we get Enter or buffer is long enough, process as barcode
+
         if (e.key === 'Enter' && barcodeBuffer.length > 3) {
-            // Remove the Enter character
             const barcode = barcodeBuffer.slice(0, -1);
-            
-            // Only process if we're not typing in an input field
+
             if (!['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
                 e.preventDefault();
                 processScannedBarcode(barcode);
                 barcodeBuffer = '';
             }
         }
-        
-        // Clear buffer if it gets too long (prevent false positives)
+
         if (barcodeBuffer.length > 50) {
             barcodeBuffer = '';
         }
@@ -285,9 +269,7 @@ async function checkCameraPermissions() {
     }
 }
 
-// Initialize camera check when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    // Check camera permissions on page load (optional)
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         checkCameraPermissions().then(hasPermission => {
             if (!hasPermission) {

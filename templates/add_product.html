@@ -2,38 +2,18 @@
 
 {% block title %}إضافة منتج جديد - نظام الكاشير{% endblock %}
 
-{% block head %}
-<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.4/minified/html5-qrcode.min.js"></script>
-<style>
-  #qr-reader {
-      width: 100% !important;
-      height: 60vh;
-      max-width: 700px;
-      margin: 0 auto;
-  }
-  #barcodeModal .modal-body {
-      padding: 0;
-  }
-  .scanner-options {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-  }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="row mb-4">
     <div class="col">
         <h1 class="h3 text-primary">
-            <i class="fas fa-plus me-2"></i> إضافة منتج جديد
+            <i class="fas fa-plus me-2"></i>
+            إضافة منتج جديد
         </h1>
     </div>
     <div class="col-auto">
         <a href="{{ url_for('products') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-right me-1"></i> العودة للمنتجات
+            <i class="fas fa-arrow-right me-1"></i>
+            العودة للمنتجات
         </a>
     </div>
 </div>
@@ -45,81 +25,161 @@
                 <form method="POST" enctype="multipart/form-data">
                     {{ form.hidden_tag() }}
 
-                    <!-- الحقول الأساسية -->
-                    <div class="row mb-3">
+                    <!-- معاينة الصورة قبل الرفع -->
+                    <div class="mb-3 text-center">
+                        <img id="productImagePreview" src="" alt="معاينة الصورة" 
+                             class="img-thumbnail" style="max-width:200px; max-height:200px; display:none;">
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-6">
-                            {{ form.name_ar.label(class="form-label") }}
-                            {{ form.name_ar(class="form-control") }}
+                            <div class="mb-3">
+                                {{ form.name_ar.label(class="form-label") }}
+                                {{ form.name_ar(class="form-control") }}
+                                {% for error in form.name_ar.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            {{ form.name.label(class="form-label") }}
-                            {{ form.name(class="form-control") }}
+                            <div class="mb-3">
+                                {{ form.name.label(class="form-label") }}
+                                {{ form.name(class="form-control") }}
+                                {% for error in form.name.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         {{ form.description.label(class="form-label") }}
                         {{ form.description(class="form-control", rows="3") }}
+                        {% for error in form.description.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
                     </div>
 
-                    <!-- حقل الباركود مع ماسح الكاميرا -->
-                    <div class="row mb-3">
+                    <div class="row">
                         <div class="col-md-6">
-                            {{ form.sku.label(class="form-label") }}
-                            {{ form.sku(class="form-control") }}
+                            <div class="mb-3">
+                                {{ form.sku.label(class="form-label") }}
+                                {{ form.sku(class="form-control") }}
+                                {% for error in form.sku.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            {{ form.barcode.label(class="form-label") }}
-                            <div class="input-group">
-                                {{ form.barcode(class="form-control", id="productBarcode") }}
-                                <button type="button" class="btn btn-dark" onclick="document.getElementById('productBarcode').focus()">
-                                    <i class="fas fa-keyboard me-1"></i> جهاز الباركود
-                                </button>
-                                <button type="button" class="btn btn-success" onclick="openBarcodeModal()">
-                                    <i class="fas fa-camera me-1"></i> ماسح الباركود
-                                </button>
+                            <div class="mb-3">
+                                {{ form.barcode.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.barcode(class="form-control", id="barcode") }}
+                                    <button type="button" class="btn btn-outline-secondary" onclick="generateBarcode()" title="توليد باركود">
+                                        <i class="fas fa-magic"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('barcode').focus()" title="قارئ الباركود">
+                                        <i class="fas fa-barcode"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#barcodeModal" title="استخدام الكاميرا">
+                                        <i class="fas fa-camera"></i>
+                                    </button>
+                                </div>
+                                {% for error in form.barcode.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
 
-                    <!-- باقي الحقول -->
                     <div class="mb-3">
                         {{ form.category_name.label(class="form-label") }}
-                        {{ form.category_name(class="form-control") }}
+                        {{ form.category_name(class="form-control", placeholder="اكتب اسم الفئة أو اختر فئة موجودة") }}
+                        {% for error in form.category_name.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
                     </div>
 
-                    <div class="row mb-3">
+                    <div class="row">
                         <div class="col-md-6">
-                            {{ form.price.label(class="form-label") }}
-                            {{ form.price(class="form-control") }}
+                            <div class="mb-3">
+                                {{ form.price.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.price(class="form-control") }}
+                                    <span class="input-group-text">جنية</span>
+                                </div>
+                                {% for error in form.price.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            {{ form.cost_price.label(class="form-label") }}
-                            {{ form.cost_price(class="form-control") }}
+                            <div class="mb-3">
+                                {{ form.cost_price.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.cost_price(class="form-control") }}
+                                    <span class="input-group-text">جنية</span>
+                                </div>
+                                {% for error in form.cost_price.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                                <div class="form-text">اختياري - لحساب هامش الربح</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="row mb-3">
+                    <div class="mb-3">
+                        <label class="form-label">الحالة</label>
+                        <div>
+                            <label class="form-check-label me-2">
+                                <input type="radio" name="is_active" value="1" class="form-check-input"
+                                {% if form.is_active.data == True %}checked{% endif %}>
+                                متوفر
+                            </label>
+                            <label class="form-check-label">
+                                <input type="radio" name="is_active" value="0" class="form-check-input"
+                                {% if form.is_active.data == False %}checked{% endif %}>
+                                غير متوفر
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-6">
-                            {{ form.quantity.label(class="form-label") }}
-                            {{ form.quantity(class="form-control") }}
+                            <div class="mb-3">
+                                {{ form.quantity.label(class="form-label") }}
+                                {{ form.quantity(class="form-control") }}
+                                {% for error in form.quantity.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            {{ form.min_quantity.label(class="form-label") }}
-                            {{ form.min_quantity(class="form-control") }}
+                            <div class="mb-3">
+                                {{ form.min_quantity.label(class="form-label") }}
+                                {{ form.min_quantity(class="form-control") }}
+                                {% for error in form.min_quantity.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                                <div class="form-text">سيتم تنبيهك عند انخفاض المخزون لهذا الحد</div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         {{ form.image.label(class="form-label") }}
                         {{ form.image(class="form-control", id="productImageInput") }}
-                        <img id="productImagePreview" src="" alt="معاينة الصورة" class="img-thumbnail mt-2" style="max-width:200px; display:none;">
+                        {% for error in form.image.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                        <div class="form-text">اختر صورة للمنتج (JPG, PNG)</div>
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a href="{{ url_for('products') }}" class="btn btn-secondary me-md-2">إلغاء</a>
                         <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save me-1"></i> حفظ المنتج
+                            <i class="fas fa-save me-1"></i>
+                            حفظ المنتج
                         </button>
                     </div>
                 </form>
@@ -133,11 +193,11 @@
   <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">مسح الباركود</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="stopScanner()"></button>
+        <h5 class="modal-title">مسح الباركود عبر الكاميرا</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div class="scanner-options">
+        <div class="scanner-options mb-2">
           <button class="btn btn-success me-1" onclick="startCamera('environment')">كاميرا خلفية</button>
           <button class="btn btn-secondary me-1" onclick="startCamera('user')">كاميرا أمامية</button>
           <label class="btn btn-primary mb-0">
@@ -145,88 +205,104 @@
             <input type="file" accept="image/*" style="display:none" onchange="scanFile(this)">
           </label>
         </div>
-        <div id="qr-reader" style="width:100%; height:60vh;"></div>
+        <div class="scanner-status mb-2" id="scannerStatus">اختر الكاميرا لبدء المسح</div>
+        <div id="qr-reader" style="width:100%;"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="stopScanner()">إغلاق</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="stopCamera()">إغلاق</button>
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode"></script>
 <script>
-let html5QrCode;
+let html5Qrcode = null;
 
-// فتح مودال الباركود
-function openBarcodeModal() {
-    const modal = new bootstrap.Modal(document.getElementById('barcodeModal'));
-    modal.show();
+// توليد باركود عشوائي
+function generateBarcode() {
+    const ts = Date.now().toString().slice(-8);
+    const rnd = Math.floor(Math.random() * 1000).toString().padStart(3,'0');
+    document.getElementById('barcode').value = ts + rnd;
 }
 
-// بدء الكاميرا
+// تركيز على خانة الباركود
+function focusBarcodeInput() {
+    document.getElementById("barcode").focus();
+}
+
+// بدء الكاميرا في المودال
 function startCamera(facingMode) {
-    if(html5QrCode) html5QrCode.stop().catch(()=>{});
-    html5QrCode = new Html5Qrcode("qr-reader");
-
-    Html5Qrcode.getCameras().then(cameras => {
-        if(cameras && cameras.length){
-            let cameraId = cameras[0].id; // الخلفية افتراضية
-            if(facingMode === 'user' && cameras.length > 1){
-                cameraId = cameras[cameras.length-1].id; // الأمامية
-            }
-
-            html5QrCode.start(
-                cameraId,
-                { fps: 10, qrbox: 250 },
-                decodedText => {
-                    document.getElementById("productBarcode").value = decodedText;
-                    stopScanner();
-                },
-                errorMessage => {
-                    // تجاهل الأخطاء أثناء المسح
-                }
-            ).catch(err => {
-                alert("تعذر الوصول للكاميرا: " + err);
-            });
-        } else {
-            alert("لا توجد كاميرا متاحة على هذا الجهاز");
-        }
-    }).catch(err => alert("تعذر الوصول للكاميرا: " + err));
-}
-
-// مسح صورة تم رفعها
-function scanFile(input) {
-    if(!input.files || !input.files[0]) return;
-    if(html5QrCode) html5QrCode.stop().catch(()=>{});
-    html5QrCode = new Html5Qrcode("qr-reader");
-
-    html5QrCode.scanFile(input.files[0], true)
-        .then(decodedText => {
-            document.getElementById("productBarcode").value = decodedText;
-            stopScanner();
-        })
-        .catch(err => alert("تعذر قراءة الباركود من الصورة"));
-}
-
-// إيقاف الماسح
-function stopScanner(){
-    if(html5QrCode){
-        html5QrCode.stop().catch(()=>{});
+    if (html5Qrcode) {
+        html5Qrcode.stop().then(() => html5Qrcode.clear());
     }
-    const modalEl = document.getElementById('barcodeModal');
-    bootstrap.Modal.getInstance(modalEl)?.hide();
+    html5Qrcode = new Html5Qrcode("qr-reader");
+    html5Qrcode.start(
+        { facingMode: facingMode },
+        { fps: 10, qrbox: 250, formatsToSupport: [
+            Html5QrcodeSupportedFormats.QR_CODE,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39
+        ]},
+        (decodedText) => {
+            document.getElementById("barcode").value = decodedText;
+            playBeep();
+            stopCamera();
+            bootstrap.Modal.getInstance(document.getElementById('barcodeModal')).hide();
+        }
+    ).then(() => {
+        document.getElementById("scannerStatus").innerText = "جاري المسح...";
+    }).catch(err => console.error(err));
 }
 
-// معاينة الصورة قبل الرفع
-document.getElementById('productImageInput').addEventListener('change', function(event) {
-    const [file] = event.target.files;
+// إيقاف الكاميرا
+function stopCamera() {
+    if (html5Qrcode) {
+        html5Qrcode.stop().then(() => html5Qrcode.clear());
+    }
+}
+
+// قراءة باركود من صورة
+function scanFile(input) {
+    if (!input.files.length) return;
+    const file = input.files[0];
+    const html5QrCode = new Html5Qrcode("qr-reader");
+    html5QrCode.scanFile(file, true).then(decodedText => {
+        document.getElementById("barcode").value = decodedText;
+        playBeep();
+        bootstrap.Modal.getInstance(document.getElementById('barcodeModal')).hide();
+    }).catch(() => {
+        alert("لم يتم التعرف على الباركود من الصورة");
+    });
+}
+
+// صوت + اهتزاز
+function playBeep() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    osc.type = "sine"; osc.frequency.value = 1000;
+    osc.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => osc.stop(), 200);
+    if (navigator.vibrate) navigator.vibrate(200);
+}
+
+// معاينة صورة المنتج قبل الرفع
+document.getElementById('productImageInput').addEventListener('change', e => {
+    const [file] = e.target.files;
     const preview = document.getElementById('productImagePreview');
     if (file) {
         preview.src = URL.createObjectURL(file);
         preview.style.display = 'inline-block';
     } else {
-        preview.style.display = 'none';
         preview.src = "";
+        preview.style.display = 'none';
     }
 });
 </script>
