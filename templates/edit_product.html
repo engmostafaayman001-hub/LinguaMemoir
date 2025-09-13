@@ -178,19 +178,25 @@ function startCamera(facingMode) {
     if(html5QrCode) html5QrCode.stop().catch(()=>{});
     html5QrCode = new Html5Qrcode("qr-reader");
 
-    html5QrCode.start(
-        { facingMode: facingMode },
-        { fps: 10, qrbox: 250 },
-        decodedText => {
-            document.getElementById("barcode").value = decodedText;
-            stopScanner();
-        },
-        errorMessage => {
-            // يمكن تركها فارغة
+    Html5Qrcode.getCameras().then(cameras => {
+        if(cameras && cameras.length){
+            let cameraId = facingMode === 'user' && cameras.length > 1 
+                           ? cameras[cameras.length-1].id 
+                           : cameras[0].id;
+
+            html5QrCode.start(
+                cameraId,
+                { fps: 10, qrbox: 250 },
+                decodedText => {
+                    document.getElementById("barcode").value = decodedText;
+                    stopScanner();
+                },
+                errorMessage => { /* يمكن تركها فارغة */ }
+            ).catch(err => alert("تعذر الوصول للكاميرا: " + err));
+        } else {
+            alert("لا توجد كاميرا متاحة على هذا الجهاز");
         }
-    ).catch(err => {
-        alert("تعذر الوصول للكاميرا: " + err);
-    });
+    }).catch(err => alert("تعذر الوصول للكاميرا: " + err));
 }
 
 // مسح صورة تم رفعها
@@ -216,9 +222,7 @@ function stopScanner(){
     bootstrap.Modal.getInstance(modalEl)?.hide();
 }
 
-
-
-// معاينة الصورة
+// معاينة صورة المنتج
 document.getElementById('productImageInput').addEventListener('change', function(event) {
     const [file] = event.target.files;
     const preview = document.getElementById('productImagePreview');
@@ -229,5 +233,16 @@ document.getElementById('productImageInput').addEventListener('change', function
         preview.classList.add('d-none');
     }
 });
+
+// التركيز على حقل الباركود
+function focusBarcodeInput() {
+    document.getElementById("barcode").focus();
+}
+
+// إنشاء باركود عشوائي (اختياري)
+function generateBarcode() {
+    const randomCode = 'PRD-' + Math.floor(Math.random()*1000000);
+    document.getElementById("barcode").value = randomCode;
+}
 </script>
 {% endblock %}

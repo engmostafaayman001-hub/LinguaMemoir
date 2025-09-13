@@ -127,6 +127,7 @@
         </div>
     </div>
 </div>
+
 <!-- مودال ماسح الباركود -->
 <div class="modal fade" id="barcodeModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
@@ -167,19 +168,30 @@ function startCamera(facingMode) {
     if(html5QrCode) html5QrCode.stop().catch(()=>{});
     html5QrCode = new Html5Qrcode("qr-reader");
 
-    html5QrCode.start(
-        { facingMode: facingMode },
-        { fps: 10, qrbox: 250 },
-        decodedText => {
-            document.getElementById("barcode").value = decodedText;
-            stopScanner();
-        },
-        errorMessage => {
-            // يمكن تركها فارغة
+    Html5Qrcode.getCameras().then(cameras => {
+        if(cameras && cameras.length){
+            let cameraId = cameras[0].id; // الخلفية افتراضية
+            if(facingMode === 'user' && cameras.length > 1){
+                cameraId = cameras[cameras.length-1].id; // الأمامية
+            }
+
+            html5QrCode.start(
+                cameraId,
+                { fps: 10, qrbox: 250 },
+                decodedText => {
+                    document.getElementById("productBarcode").value = decodedText;
+                    stopScanner();
+                },
+                errorMessage => {
+                    // تجاهل الأخطاء أثناء المسح
+                }
+            ).catch(err => {
+                alert("تعذر الوصول للكاميرا: " + err);
+            });
+        } else {
+            alert("لا توجد كاميرا متاحة على هذا الجهاز");
         }
-    ).catch(err => {
-        alert("تعذر الوصول للكاميرا: " + err);
-    });
+    }).catch(err => alert("تعذر الوصول للكاميرا: " + err));
 }
 
 // مسح صورة تم رفعها
@@ -190,7 +202,7 @@ function scanFile(input) {
 
     html5QrCode.scanFile(input.files[0], true)
         .then(decodedText => {
-            document.getElementById("barcode").value = decodedText;
+            document.getElementById("productBarcode").value = decodedText;
             stopScanner();
         })
         .catch(err => alert("تعذر قراءة الباركود من الصورة"));
@@ -204,7 +216,6 @@ function stopScanner(){
     const modalEl = document.getElementById('barcodeModal');
     bootstrap.Modal.getInstance(modalEl)?.hide();
 }
-
 
 // معاينة الصورة قبل الرفع
 document.getElementById('productImageInput').addEventListener('change', function(event) {
