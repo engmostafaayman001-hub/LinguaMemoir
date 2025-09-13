@@ -150,7 +150,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <div class="scanner-options">
+        <div class="scanner-options mb-2">
           <button class="btn btn-success me-1" onclick="startCamera('environment')">كاميرا خلفية</button>
           <button class="btn btn-secondary me-1" onclick="startCamera('user')">كاميرا أمامية</button>
           <label class="btn btn-primary mb-0">
@@ -158,117 +158,105 @@
             <input type="file" accept="image/*" style="display:none" onchange="scanFile(this)">
           </label>
         </div>
-        <div class="scanner-status" id="scannerStatus">اختر الكاميرا لبدء المسح</div>
-        <div id="qr-reader"></div>
+        <div class="scanner-status mb-2" id="scannerStatus">اختر الكاميرا لبدء المسح</div>
+        <div id="qr-reader" style="width:100%;"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="stopCamera()">إغلاق</button>
       </div>
     </div>
   </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode"></script>
 <script>
-let html5QrCode;
-let modal;
-let scanning = false;
+let html5Qrcode = null;
 
-function useBarcodeDevice() {
-    document.getElementById("productSearch").focus();
+// توليد باركود عشوائي
+function generateBarcode() {
+    const ts = Date.now().toString().slice(-8);
+    const rnd = Math.floor(Math.random() * 1000).toString().padStart(3,'0');
+    document.getElementById('barcode').value = ts + rnd;
 }
 
-function startBarcodeScanner() {
-    const modalEl = document.getElementById('barcodeModal');
-    modal = new bootstrap.Modal(modalEl);
-    modal.show();
-
-    modalEl.addEventListener('hidden.bs.modal', () => {
-        stopScanner();
-    });
+// تركيز على خانة الباركود
+function focusBarcodeInput() {
+    document.getElementById("barcode").focus();
 }
 
+// بدء الكاميرا في المودال
 function startCamera(facingMode) {
-    stopScanner(); 
-    html5QrCode = new Html5Qrcode("qr-reader");
-    scanning = true;
-    document.getElementById("scannerStatus").textContent = "جاري فتح الكاميرا ...";
-
-    Html5Qrcode.getCameras().then(cameras => {
-        if(cameras && cameras.length){
-            let cameraId = cameras[0].id;
-            if(facingMode === 'user' && cameras.length > 1){
-                cameraId = cameras[cameras.length-1].id;
-            }
-
-            // تنسيقات مدعومة (QR + باركود خطي)
-            const formatsToSupport = [
-                Html5QrcodeSupportedFormats.QR_CODE,
-                Html5QrcodeSupportedFormats.CODE_128,
-                Html5QrcodeSupportedFormats.CODE_39,
-                Html5QrcodeSupportedFormats.EAN_13,
-                Html5QrcodeSupportedFormats.EAN_8,
-                Html5QrcodeSupportedFormats.UPC_A,
-                Html5QrcodeSupportedFormats.UPC_E
-            ];
-
-            html5QrCode.start(
-                cameraId,
-                { 
-                    fps: 10, 
-                    qrbox: { width: 250, height: 250 },
-                    formatsToSupport: formatsToSupport
-                },
-                (decodedText, decodedResult) => {
-                    if(scanning){
-                        scanning = false;
-                        document.getElementById("productSearch").value = decodedText;
-                        stopScanner();
-                        searchProducts();
-                    }
-                },
-                (errorMessage) => {
-                    console.warn("خطأ أثناء المسح:", errorMessage);
-                }
-            ).then(() => {
-                document.getElementById("scannerStatus").textContent = "وجّه الكاميرا نحو الباركود / QR ...";
-            }).catch(err => {
-                console.error(err);
-                document.getElementById("scannerStatus").textContent = "تعذر بدء الكاميرا";
-            });
-        } else {
-            document.getElementById("scannerStatus").textContent = "لا توجد كاميرا متاحة";
+    if (html5Qrcode) {
+        html5Qrcode.stop().then(() => html5Qrcode.clear());
+    }
+    html5Qrcode = new Html5Qrcode("qr-reader");
+    html5Qrcode.start(
+        { facingMode: facingMode },
+        { fps: 10, qrbox: 250, formatsToSupport: [
+            Html5QrcodeSupportedFormats.QR_CODE,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39
+        ]},
+        (decodedText) => {
+            document.getElementById("barcode").value = decodedText;
+            playBeep();
+            stopCamera();
+            bootstrap.Modal.getInstance(document.getElementById('barcodeModal')).hide();
         }
-    }).catch(err => {
-        console.error(err);
-        document.getElementById("scannerStatus").textContent = "تعذر الوصول إلى الكاميرا";
+    ).then(() => {
+        document.getElementById("scannerStatus").innerText = "جاري المسح...";
+    }).catch(err => console.error(err));
+}
+
+// إيقاف الكاميرا
+function stopCamera() {
+    if (html5Qrcode) {
+        html5Qrcode.stop().then(() => html5Qrcode.clear());
+    }
+}
+
+// قراءة باركود من صورة
+function scanFile(input) {
+    if (!input.files.length) return;
+    const file = input.files[0];
+    const html5QrCode = new Html5Qrcode("qr-reader");
+    html5QrCode.scanFile(file, true).then(decodedText => {
+        document.getElementById("barcode").value = decodedText;
+        playBeep();
+        bootstrap.Modal.getInstance(document.getElementById('barcodeModal')).hide();
+    }).catch(() => {
+        alert("لم يتم التعرف على الباركود من الصورة");
     });
 }
 
-function scanFile(input) {
-    if(!input.files || !input.files[0]) return;
-    stopScanner();
-    html5QrCode = new Html5Qrcode("qr-reader");
-
-    html5QrCode.scanFile(input.files[0], true)
-        .then(decodedText => {
-            document.getElementById("productSearch").value = decodedText;
-            stopScanner();
-            searchProducts();
-        })
-        .catch(err => {
-            document.getElementById("scannerStatus").textContent = "تعذر قراءة الباركود من الصورة";
-        });
+// صوت + اهتزاز
+function playBeep() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    osc.type = "sine"; osc.frequency.value = 1000;
+    osc.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => osc.stop(), 200);
+    if (navigator.vibrate) navigator.vibrate(200);
 }
 
-function stopScanner(){
-    if(html5QrCode){
-        html5QrCode.stop().catch(()=>{}).then(()=> {
-            html5QrCode.clear();
-        });
+// معاينة صورة المنتج قبل الرفع
+document.getElementById('productImageInput').addEventListener('change', e => {
+    const [file] = e.target.files;
+    const preview = document.getElementById('productImagePreview');
+    if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'inline-block';
+    } else {
+        preview.src = "";
+        preview.style.display = 'none';
     }
-    scanning = false;
-    document.getElementById("scannerStatus").textContent = "تم إيقاف الماسح";
-    if(modal) modal.hide();
-}
+});
 </script>
 {% endblock %}
