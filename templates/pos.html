@@ -48,22 +48,23 @@
         <div class="card mb-4">
             <div class="card-header">
                 <div class="row g-2">
-                    <div class="col-md-6">
+                    <div class="col-md-8">
                         <div class="input-group">
-                            <input type="text" id="productSearch" class="form-control" placeholder="البحث بالاسم أو الباركود...">
-                            <button class="btn btn-primary" type="button" onclick="searchProducts()">
-                                <i class="fas fa-search"></i>
+                            <input type="text" id="barcode" class="form-control" placeholder="ادخل الباركود أو الاسم">
+                            <button type="button" class="btn btn-outline-secondary" onclick="generateBarcode()" title="توليد باركود">
+                                <i class="fas fa-magic"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="focusBarcodeInput()" title="تركيز على خانة الباركود">
+                                <i class="fas fa-barcode"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#barcodeModal" title="استخدام الكاميرا">
+                                <i class="fas fa-camera"></i>
                             </button>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-dark w-100" onclick="useBarcodeDevice()">
-                            <i class="fas fa-keyboard me-1"></i> جهاز الباركود
-                        </button>
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-success w-100" onclick="startBarcodeScanner()">
-                            <i class="fas fa-camera me-1"></i> مسح الباركود
+                    <div class="col-md-4">
+                        <button class="btn btn-primary w-100" type="button" onclick="searchProducts()">
+                            <i class="fas fa-search me-1"></i> بحث
                         </button>
                     </div>
                 </div>
@@ -179,6 +180,7 @@ function generateBarcode() {
     const ts = Date.now().toString().slice(-8);
     const rnd = Math.floor(Math.random() * 1000).toString().padStart(3,'0');
     document.getElementById('barcode').value = ts + rnd;
+    searchProducts(); // البحث تلقائي بعد توليد الباركود
 }
 
 // تركيز على خانة الباركود
@@ -208,6 +210,7 @@ function startCamera(facingMode) {
             playBeep();
             stopCamera();
             bootstrap.Modal.getInstance(document.getElementById('barcodeModal')).hide();
+            searchProducts(); // البحث تلقائي بعد المسح
         }
     ).then(() => {
         document.getElementById("scannerStatus").innerText = "جاري المسح...";
@@ -230,6 +233,7 @@ function scanFile(input) {
         document.getElementById("barcode").value = decodedText;
         playBeep();
         bootstrap.Modal.getInstance(document.getElementById('barcodeModal')).hide();
+        searchProducts(); // البحث تلقائي بعد رفع الصورة
     }).catch(() => {
         alert("لم يتم التعرف على الباركود من الصورة");
     });
@@ -245,18 +249,5 @@ function playBeep() {
     setTimeout(() => osc.stop(), 200);
     if (navigator.vibrate) navigator.vibrate(200);
 }
-
-// معاينة صورة المنتج قبل الرفع
-document.getElementById('productImageInput').addEventListener('change', e => {
-    const [file] = e.target.files;
-    const preview = document.getElementById('productImagePreview');
-    if (file) {
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = 'inline-block';
-    } else {
-        preview.src = "";
-        preview.style.display = 'none';
-    }
-});
 </script>
 {% endblock %}
