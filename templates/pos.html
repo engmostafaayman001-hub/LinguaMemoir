@@ -174,13 +174,14 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script>
 let html5Qrcode = null;
+let cart = [];
 
 // توليد باركود عشوائي
 function generateBarcode() {
     const ts = Date.now().toString().slice(-8);
     const rnd = Math.floor(Math.random() * 1000).toString().padStart(3,'0');
     document.getElementById('barcode').value = ts + rnd;
-    searchProducts(); // البحث تلقائي بعد توليد الباركود
+    searchProducts();
 }
 
 // تركيز على خانة الباركود
@@ -188,7 +189,108 @@ function focusBarcodeInput() {
     document.getElementById("barcode").focus();
 }
 
-// بدء الكاميرا في المودال
+// البحث عن المنتجات
+function searchProducts() {
+    const q = document.getElementById("barcode").value.trim();
+    if (!q) return;
+
+    fetch(`/search_product?barcode=${encodeURIComponent(q)}`)
+    .then(res => res.json())
+    .then(data => {
+        const resultsDiv = document.getElementById("searchResults");
+        resultsDiv.innerHTML = "";
+        if (data.success && data.products.length > 0) {
+            data.products.forEach(p => {
+                resultsDiv.innerHTML += `
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6>${p.name}</h6>
+                            <p>السعر: ${p.price} جنيه</p>
+                            <button class="btn btn-sm btn-success" onclick="addToCart(${p.id}, '${p.name}', ${p.price})">
+                                إضافة للسلة
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        } else {
+            resultsDiv.innerHTML = "<p class='text-danger'>لم يتم العثور على المنتج</p>";
+        }
+    });
+}
+
+// إضافة للسلة
+function addToCart(id, name, price) {
+    cart.push({id, name, price});
+    renderCart();
+}
+
+// عرض السلة
+function renderCart() {
+    const container = document.getElementById("cartItems");
+    if (cart.length === 0) {
+        container.innerHTML = `<div class="text-center text-muted py-4">
+            <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+            <p>السلة فارغة</p></div>`;
+        document.getElementById("checkoutBtn").disabled = true;
+        return;
+    }
+    let html = "";
+    let subtotal = 0;
+    cart.forEach((item, index) => {
+        subtotal += item.price;
+        html += `<div class="d-flex justify-content-between border-bottom py-2">
+            <span>${item.name}</span>
+            <span>${item.price} جنيه <button class="btn btn-sm btn-danger" onclick="removeFromCart(${index})">&times;</button></span>
+        </div>`;
+    });
+    container.innerHTML = html;
+    const discount = parseFloat(document.getElementById("discountAmount").value) || 0;
+    const total = subtotal - discount;
+    document.getElementById("subtotal").innerText = subtotal.toFixed(2) + " جنيه";
+    document.getElementById("discount").innerText = discount.toFixed(2) + " جنيه";
+    document.getElementById("total").innerText = total.toFixed(2) + " جنيه";
+    document.getElementById("checkoutBtn").disabled = false;
+}
+
+// حذف من السلة
+function removeFromCart(index) {
+    cart.splice(index,1);
+    renderCart();
+}
+
+// إفراغ السلة
+function clearCart() {
+    cart = [];
+    renderCart();
+}
+
+// إتمام البيع
+function processSale() {
+    const data = {
+        customerName: document.getElementById("customerName").value,
+        customerPhone: document.getElementById("customerPhone").value,
+        discount: parseFloat(document.getElementById("discountAmount").value) || 0,
+        paymentMethod: document.getElementById("paymentMethod").value,
+        items: cart
+    };
+    fetch("/process_sale", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    }).then(res => res.json())
+    .then(resp => {
+        if (resp.success) {
+            alert("تم حفظ الفاتورة بنجاح");
+            clearCart();
+        } else {
+            alert("حدث خطأ أثناء الحفظ");
+        }
+    });
+}
+
+// ماسح الكاميرا
 function startCamera(facingMode) {
     if (html5Qrcode) {
         html5Qrcode.stop().then(() => html5Qrcode.clear());
@@ -210,21 +312,19 @@ function startCamera(facingMode) {
             playBeep();
             stopCamera();
             bootstrap.Modal.getInstance(document.getElementById('barcodeModal')).hide();
-            searchProducts(); // البحث تلقائي بعد المسح
+            searchProducts();
         }
     ).then(() => {
         document.getElementById("scannerStatus").innerText = "جاري المسح...";
     }).catch(err => console.error(err));
 }
 
-// إيقاف الكاميرا
 function stopCamera() {
     if (html5Qrcode) {
         html5Qrcode.stop().then(() => html5Qrcode.clear());
     }
 }
 
-// قراءة باركود من صورة
 function scanFile(input) {
     if (!input.files.length) return;
     const file = input.files[0];
@@ -233,13 +333,12 @@ function scanFile(input) {
         document.getElementById("barcode").value = decodedText;
         playBeep();
         bootstrap.Modal.getInstance(document.getElementById('barcodeModal')).hide();
-        searchProducts(); // البحث تلقائي بعد رفع الصورة
+        searchProducts();
     }).catch(() => {
         alert("لم يتم التعرف على الباركود من الصورة");
     });
 }
 
-// صوت + اهتزاز
 function playBeep() {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = ctx.createOscillator();

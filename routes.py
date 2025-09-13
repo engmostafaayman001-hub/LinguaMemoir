@@ -264,6 +264,25 @@ def process_sale():
 
 # =========================
 # إدارة المنتجات والمخزون
+
+
+@app.route('/search_product')
+def search_product():
+    barcode = request.args.get('barcode')
+    if not barcode:
+        return jsonify({"error": "no barcode"}), 400
+
+    product = Product.query.filter_by(barcode=barcode).first()
+    if product:
+        return jsonify({
+            "id": product.id,
+            "name": product.name,
+            "price": product.price,
+            "stock": product.stock
+        })
+    else:
+        return jsonify({"error": "not found"}), 404
+
 # =========================
 @app.route('/inventory')
 @login_required

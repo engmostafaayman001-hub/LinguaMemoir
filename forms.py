@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import RadioField, StringField, TextAreaField, DecimalField, IntegerField, SelectField, BooleanField, PasswordField
-from wtforms.validators import DataRequired, Email, NumberRange, Optional, Length
+from wtforms.validators import DataRequired, Email, NumberRange, Optional, Length, EqualTo
 from wtforms import StringField
 from wtforms.validators import DataRequired
 
@@ -25,10 +25,28 @@ class ProductForm(FlaskForm):
     is_active = RadioField('الحالة', choices=[('1', 'متوفر'), ('0', 'غير متوفر')], default='1')
 
 
+
 class EmployeeForm(FlaskForm):
-    username = StringField('اسم المستخدم', validators=[DataRequired(message='اسم المستخدم مطلوب'), Length(min=3, max=64, message='اسم المستخدم يجب أن يكون بين 3 و 64 حرف')])
-    email = StringField('البريد الإلكتروني', validators=[DataRequired(message='البريد الإلكتروني مطلوب'), Email(message='البريد الإلكتروني غير صحيح')])
+    username = StringField('اسم المستخدم', validators=[
+        DataRequired(message='اسم المستخدم مطلوب'),
+        Length(min=3, max=64, message='اسم المستخدم يجب أن يكون بين 3 و 64 حرف')
+    ])
+    email = StringField('البريد الإلكتروني', validators=[
+        DataRequired(message='البريد الإلكتروني مطلوب'),
+        Email(message='البريد الإلكتروني غير صحيح')
+    ])
     full_name = StringField('الاسم الكامل', validators=[DataRequired(message='الاسم الكامل مطلوب')])
-    password = PasswordField('كلمة المرور', validators=[DataRequired(message='كلمة المرور مطلوبة'), Length(min=6, message='كلمة المرور يجب أن تكون على الأقل 6 أحرف')])
-    role = SelectField('الدور', choices=[('cashier', 'كاشير'), ('manager', 'مدير'), ('admin', 'مدير عام')], validators=[DataRequired(message='الدور مطلوب')])
+    password = PasswordField('كلمة المرور', validators=[
+        DataRequired(message='كلمة المرور مطلوبة'),
+        Length(min=6, message='كلمة المرور يجب أن تكون على الأقل 6 أحرف')
+    ])
+    confirm_password = PasswordField('تأكيد كلمة المرور', validators=[
+        DataRequired(message='تأكيد كلمة المرور مطلوب'),
+        EqualTo('password', message='كلمتا المرور غير متطابقتين')
+    ])
+    role = SelectField('الدور', choices=[
+        ('cashier', 'كاشير'),
+        ('manager', 'مدير'),
+        ('admin', 'مدير عام')
+    ], validators=[DataRequired(message='الدور مطلوب')])
     is_active = BooleanField('مفعل', default=True)

@@ -127,7 +127,8 @@ class InventoryMovement(db.Model):
     previous_quantity = db.Column(db.Integer, nullable=False)
     new_quantity = db.Column(db.Integer, nullable=False)
     
-    reason = db.Column(db.String(255))
+    reference_id = db.Column(db.Integer)  # مثلاً رقم البيع أو فاتورة المشتريات
+
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
